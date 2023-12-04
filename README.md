@@ -1,5 +1,5 @@
 # dns01d-cf
-CloudFlare Worker for ACME DNS-01 validation without exposing DNS API tokens
+CloudFlare Worker for cloud provider ACME DNS-01 validation without exposing DNS API tokens
 
 ## ACKNOWLEDGEMENTS
 
