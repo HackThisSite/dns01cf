@@ -1,9 +1,9 @@
-# dns01d-cf
-Worker for CloudFlare ACME DNS-01 validation without exposing DNS API tokens
+# dns01cf
+CloudFlare Worker for ACME DNS-01 validation
 
 ## ACKNOWLEDGEMENTS
 
-dns01d uses the following softwares and services:
+dns01cf uses the following softwares and services:
 
 * CloudFlare
 * GitHub
@@ -13,7 +13,7 @@ dns01d uses the following softwares and services:
 
 ### MIT License
 
-Copyright (c) 2023 dns01d
+Copyright (c) 2023 dns01cf
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
