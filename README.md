@@ -101,28 +101,37 @@ If `DNS01CF_PATH_PREFIX` is set to `foobar`, then to create a token the path wou
 | Default: `false` |
 |--|
 
-todo
+Must be set to `true` in order to use the `create_token` endpoint. For security this is not enabled by default.
 
 ##### `LISTENERS`
 
 | Default: `dns01cf` |
 |--|
 
-todo
+A comma-delimited list of listeners to enable for clients to use, evaluated in order of first to last.
+
+Supported listeners:
+
+* `dns01cf`
+* `acmedns`
 
 ##### `RECORD_EXPIRATION`
 
 | Default: `86400` |
 |--|
 
-todo
+How long a TXT record should last for before the cron job is permitted to prune it.
+
+Used when [LISTENERS](#LISTENERS) contains `acmedns`.
+
+Must be no less than the setting of [RECORD_TTL](#RECORD-TTL) and no greater than 86400.
 
 ##### `RECORD_TTL`
 
 | Default: `60` |
 |--|
 
-todo
+The TTL value for a TXT record. Must be between 60 and 86400.
 
 ##### `TOKEN_ALGO`
 
