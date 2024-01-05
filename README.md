@@ -129,23 +129,29 @@ todo
 | Default: `HS256` |
 |--|
 
-todo
+Algorithm to use when generating a client JWT.
+
+Supported algorithms:
+
+* `HS256`
+* `HS384`
+* `HS512`
 
 ## USAGE
 
 ## ACKNOWLEDGEMENTS
 
-dns01cf uses the following softwares and services:
+*dns01cf* uses the following softwares and services:
 
 * CloudFlare
 * GitHub
 * [tsndr/cloudflare-worker-jwt](https://github.com/tsndr/cloudflare-worker-jwt)
 
+## LICENSE
+
 <details>
 
-<summary>LICENSE</summary>
-
-### MIT License
+<summary>MIT License</summary>
 
 Copyright (c) 2024 HackThisSite
 
