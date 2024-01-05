@@ -2,6 +2,9 @@
 
 [build status]
 
+| NOTE: This documentation is a work-in-progress and is not yet complete! |
+|--|
+
 ## DESCRIPTION
 
 *dns01cf* is a single-file, Wrangler-free CloudFlare Worker that performs ACME DNS-01 validation while protecting your DNS with granular client ACLs. Installation takes under 5 minutes and can be done directly in the CloudFlare web UI -- no installation of Git, Wrangler, or anything required!
@@ -28,11 +31,17 @@ Nearly all DNS providers with APIs give effectively all-or-nothing API access to
 
 Create a new CloudFlare API token
 
+*todo*
+
 ### CLOUDFLARE WORKER
 
 Create a new CloudFlare Worker and copy the contents of the `worker.js` file from this repository into that new Worker
 
+*todo*
+
 ### ENVIRONMENT VARIABLES
+
+*todo*
 
 #### REQUIRED
 
@@ -152,9 +161,23 @@ Supported algorithms:
 
 </details>
 
+### (OPTIONAL) CRON JOB
+
+*todo*
+
 ## USAGE
 
-*todo...*
+### 1. CREATE CLIENT TOKEN
+
+*todo*
+
+### 2. CONFIGURE CLIENT
+
+*todo*
+
+### 3. ACME CHALLENGE
+
+*todo*
 
 ## ACKNOWLEDGEMENTS
 
