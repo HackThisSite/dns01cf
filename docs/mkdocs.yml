@@ -1,0 +1,19 @@
+site_name: dns01cf
+site_url: https://dns01cf.com
+repo_name: hackthissite/dns01cf
+repo_url: https://github.com/hackthissite/dns01cf
+
+description: CloudFlare Worker for ACME DNS-01 validation with granular client ACLs
+copyright: HackThisSite
+
+theme:
+  name: dracula
+  logo: img/dns01cf.png
+  favicon: img/favicon.ico
+
+nav:
+  - 'Home': index.md
+  - 'Docs':
+    - 'Installation': install.md
+    - 'Usage': usage.md
+  - 'License': license.md
