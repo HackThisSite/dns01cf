@@ -7,7 +7,7 @@
 
 ## DESCRIPTION
 
-*dns01cf* is a single-file, Wrangler-free CloudFlare Worker that performs ACME DNS-01 validation while protecting your DNS with granular client ACLs. Installation takes under 5 minutes and can be done directly in the CloudFlare web UI -- no installation of Git, Wrangler, or anything required!
+*dns01cf* is a single-file, Wrangler-free CloudFlare Worker that performs ACME DNS-01 validation for domains behind CloudFlare while protecting your account with granular client ACLs. Installation takes under 5 minutes and can be done directly in the CloudFlare web UI -- no installation of Git, Wrangler, or anything required!
 
 :heavy_check_mark: **Fast Installation**: Deploying *dns01cf* requires only three steps: 1) Create a new CloudFlare API token, 2) Create a new CloudFlare Worker and copy the contents of the `worker.js` file from this repository into that new Worker, 3) Set the required and any desired optional environment variables
 
@@ -23,25 +23,87 @@ In their documentation for Challenge Types, [Let's Encrypt even states the follo
 
 > Keeping API credentials on your web server is risky.
 
-Nearly all DNS providers with APIs give effectively all-or-nothing API access to a whole zone (domain), if not all zones in the account. If an ACME client with DNS API credentials is compromised, all of the zones those API credentials have access to are compromised as well.
+Nearly all DNS providers with APIs give effectively all-or-nothing API access to a whole zone (domain), if not all zones in the account. If an ACME client with DNS API credentials is compromised, all of the zones those API credentials have access to are compromised as well. With CloudFlare API tokens in particular, 
 
 ## INSTALLATION
 
+These instructions assume you already have an existing CloudFlare account with at least one domain added
+
+Login to your [CloudFlare dashboard](https://dash.cloudflare.com)
+
 ### CLOUDFLARE API TOKEN
 
-Create a new CloudFlare API token
+First, you will need to generate a CloudFlare API token for *dns01cf* to use. This token will need the following two permissions on the zones you want *dns01cf* to access.
 
-*todo*
+    Level: Zone
+    Category: DNS
+    Access: Edit
+
+    Level: Zone
+    Category: Zone
+    Access: Read
+
+<details>
+
+<summary>Detailed instructions</summary>
+
+1. Login to your [CloudFlare dashboard](https://dash.cloudflare.com)
+2. Navigate to [User API Tokens](https://dash.cloudflare.com/profile/api-tokens)
+3. Click the **Create Token** button
+4. Click the **Use template** button next to "Edit zone DNS"
+5. Under "Permissions" leave the first permission as "Zone", "DNS", "Edit"
+6. Then click **+ Add more**
+    * In the new dropdowns select in order: "Zone", "Zone", "Read"
+7. Under "Zone Resources" change this to the zones you want *dn01cf* to access
+8. Click the **Continue to summary** button
+9. Make sure everything looks correct then click the **Create Token** button
+10. Copy the API token it gives you. **Do not lose this token, it is only shown once!**
+
+</details>
 
 ### CLOUDFLARE WORKER
 
-Create a new CloudFlare Worker and copy the contents of the `worker.js` file from this repository into that new Worker
+Create a new CloudFlare Worker, open the Quick Edit editor, clear the contents and copy the contents of the [`worker.js`](worker.js) file in this repository into the CloudFlare editor, save and deploy.
 
-*todo*
+<details>
+
+<summary>Detailed instructions</summary>
+
+1. Login to your [CloudFlare dashboard](https://dash.cloudflare.com)
+2. Navigate to **Workers & Pages**
+   * Hint: Halfway down the left menu before you select any of your domains
+3. Click the **Create application** button
+4. Click the **Create Worker** button
+5. Give the worker a name (for example, `dns01cf`), then click the **Deploy** button
+6. Next, click the **Edit code** button
+   * If you click **Configure Worker**, that's okay. Just click the **Quick edit** button in the upper-right corner.
+7. Clear out the entire contents of the `worker.js` file that opens in the editor
+8. Copy the entire contents of the [`worker.js`](worker.js) file in this repository into the CloudFlare editor from the prior step
+    * Note: Make sure that everything from the license comment at the top to the `/** dns01cf - EOF */` comment at the bottom was copied
+9. Click the **Save and deploy** button in the upper-right corner, and again in the popup dialog
+    * Note: If this button is grayed out, add then remove an extra blank line at the botton of the file and wait a moment for the button to become active
+10. In the upper-left corner underneath of the CloudFlare logo, click the name of your *dns01cf* application to return to your CloudFlare dashboard
+
+</details>
 
 ### ENVIRONMENT VARIABLES
 
-*todo*
+Add the two required environment variables listed below, as well as any of the optional ones listed further down, save and deploy.
+
+<details>
+
+<summary>Detailed instructions</summary>
+
+1. Login to your [CloudFlare dashboard](https://dash.cloudflare.com)
+2. Navigate to **Workers & Pages**
+   * Hint: Halfway down the left menu before you select any of your domains
+3. Click on the *dns01cf* application you made in the [CLOUDFLARE WORKER](#cloudflare-worker) instructions above
+4. Click the **Settings** tab in the middle of the page, then click the **Variables** tab in the center-left of the page
+5. Add the two required environment variables listed below, as well as any of the optional ones listed further down
+   * Note: It is *STRONGLY* recommended that you click the **Encrypt** button when adding the required environment variable that contain sensitive information
+6. Click the **Save and deploy** button
+
+</details>
 
 #### REQUIRED
 
@@ -49,9 +111,17 @@ Create a new CloudFlare Worker and copy the contents of the `worker.js` file fro
 
 The CloudFlare API token that will be used by *dns01cf* to perform DNS updates.
 
+You can find instructions for creating this token above in the [CLOUDFLARE API TOKEN](#cloudflare-api-token) section.
+
+| NOTICE | It is STRONGLY recommended that you click the **Encrypt** button when adding this environment variable. |
+|--|
+
 ##### `TOKEN_SECRET`
 
 The secret used to sign and validate client JWTs.
+
+| NOTICE | It is STRONGLY recommended that you click the **Encrypt** button when adding this environment variable. |
+|--|
 
 #### OPTIONAL
 
