@@ -97,7 +97,7 @@ Add the two required environment variables listed below, as well as any of the o
 1. Login to your [CloudFlare dashboard](https://dash.cloudflare.com)
 2. Navigate to **Workers & Pages**
    * Hint: Halfway down the left menu before you select any of your domains
-3. Click on the *dns01cf* application you made in the [CLOUDFLARE WORKER](#cloudflare-worker) instructions above
+3. Click on the *dns01cf* application you created from the [CLOUDFLARE WORKER](#cloudflare-worker) instructions above
 4. Click the **Settings** tab in the middle of the page, then click the **Variables** tab in the center-left of the page
 5. Add the two required environment variables listed below, as well as any of the optional ones listed further down
    * Note: It is *STRONGLY* recommended that you click the **Encrypt** button when adding the required environment variable that contain sensitive information
@@ -233,7 +233,29 @@ Supported algorithms:
 
 ### (OPTIONAL) CRON JOB
 
-*todo*
+You can optionally enable a cron job that will periodically perform two actions:
+
+1. Deletes old *dns01cf* DNS records that were not deleted by ACME clients (e.g. when using the `acmedns` [listener](#listeners))
+2. Sends us anonymous telemetry so we can roughly estimate how many people are using *dns01cf*
+   * Note: This only sends the current running version of *dns01cf*. You can disable this by setting the [DISABLE_ANON_TELEMETRY](#disable_anon_telemetry) environment variable in the [OPTIONAL](#optional) section above.
+
+It is suggested to run this every 6 hours.
+
+<details>
+
+<summary>Detailed instructions</summary>
+
+1. Login to your [CloudFlare dashboard](https://dash.cloudflare.com)
+2. Navigate to **Workers & Pages**
+   * Hint: Halfway down the left menu before you select any of your domains
+3. Click on the *dns01cf* application you created from the [CLOUDFLARE WORKER](#cloudflare-worker) instructions above
+4. Click the **Triggers** tab in the middle of the page, then scroll down to the "Cron Triggers" section
+5. Click the **Add Cron Trigger** button
+6. Change the "Execute Worker every" dropdowns to "Hour(s)" and "6"
+   * Hint: The "Cron" field below should show `0 */6 * * *`
+7. Click the **Add Trigger** button
+
+</details>
 
 ## USAGE
 
@@ -253,9 +275,10 @@ Supported algorithms:
 
 *dns01cf* uses the following softwares and services:
 
+* JavaScript
 * CloudFlare
 * GitHub
-* [tsndr/cloudflare-worker-jwt](https://github.com/tsndr/cloudflare-worker-jwt)
+* Parts of [tsndr/cloudflare-worker-jwt](https://github.com/tsndr/cloudflare-worker-jwt)
 
 ## LICENSE
 
