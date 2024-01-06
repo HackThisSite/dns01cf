@@ -114,14 +114,14 @@ The CloudFlare API token that will be used by *dns01cf* to perform DNS updates.
 You can find instructions for creating this token above in the [CLOUDFLARE API TOKEN](#cloudflare-api-token) section.
 
 | NOTICE | It is STRONGLY recommended that you click the **Encrypt** button when adding this environment variable. |
-|--|
+|--|--|
 
 ##### `TOKEN_SECRET`
 
 The secret used to sign and validate client JWTs.
 
 | NOTICE | It is STRONGLY recommended that you click the **Encrypt** button when adding this environment variable. |
-|--|
+|--|--|
 
 #### OPTIONAL
 
