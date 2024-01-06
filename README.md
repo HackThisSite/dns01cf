@@ -233,13 +233,13 @@ Supported algorithms:
 
 ### (OPTIONAL) CRON JOB
 
-You can optionally enable a cron job that will periodically perform two actions:
+You can optionally enable a scheduled cron job that periodically performs two actions:
 
 1. Deletes old *dns01cf* DNS records that were not deleted by ACME clients (e.g. when using the `acmedns` [listener](#listeners))
 2. Sends us anonymous telemetry so we can roughly estimate how many people are using *dns01cf*
    * Note: This only sends the current running version of *dns01cf*. You can disable this by setting the [DISABLE_ANON_TELEMETRY](#disable_anon_telemetry) environment variable in the [OPTIONAL](#optional) section above.
 
-It is suggested to run this every 6 hours.
+It is suggested to schedule this to run every 6 hours.
 
 <details>
 
