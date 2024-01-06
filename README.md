@@ -23,13 +23,13 @@ In their documentation for Challenge Types, [Let's Encrypt even states the follo
 
 > Keeping API credentials on your web server is risky.
 
-Nearly all DNS providers with APIs give effectively all-or-nothing API access to a whole zone (domain), if not all zones in the account. If an ACME client with DNS API credentials is compromised, all of the zones those API credentials have access to are compromised as well. With CloudFlare API tokens in particular, 
+Nearly all DNS providers with APIs give effectively all-or-nothing API access to a whole zone (domain), if not all zones in the account. If an ACME client with DNS API credentials is compromised, all of the zones those API credentials have access to are compromised as well. This is true for CloudFlare API tokens as well.
+
+Therefore, *dns01cf* was created to provide a single-file, Wrangler-free CloudFlare Worker solution that performs ACME DNS-01 validation for domains behind CloudFlare while protecting your account with granular client ACLs.
 
 ## INSTALLATION
 
-These instructions assume you already have an existing CloudFlare account with at least one domain added
-
-Login to your [CloudFlare dashboard](https://dash.cloudflare.com)
+These instructions assume you already have an existing CloudFlare account with at least one domain added.
 
 ### CLOUDFLARE API TOKEN
 
