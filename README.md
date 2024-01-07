@@ -107,7 +107,7 @@ Alternatively, if all of the domains that will use *dns01cf* are behind CloudFla
 
 Note: To create an ACME client token in step one, you must make sure the `ENABLE_CREATE_TOKEN` environment variable is set to `true` as described in [INSTALLATION](#installation) above.
 
-1. Create an ACME client token by sending a *POST* call to `dns01cf.foobar.workers.dev/dns01cf/create_token` (replace `dns01cf.foobar.workers.dev` with your CloudFlare Worker hostname), with a JSON payload such as follows:
+1. Create an ACME client token by sending a *POST* call to `dns01cf.foobar.workers.dev/dns01cf/create_token` (replace `dns01cf.foobar.workers.dev` with your CloudFlare Worker hostname), with a JSON payload like below. You will also need to set an "Authorization" request header with a value of the secret you set for the `TOKEN_SECRET` environment variable in [INSTALLATION](#installation) above. (Do not prefix the value with "Bearer " or anything else.)
 
     ```json
     {
@@ -155,7 +155,7 @@ Note: To create an ACME client token in step one, you must make sure the `ENABLE
 
 2. When you are finished creating ACME client tokens, you should change the `ENABLE_CREATE_TOKEN` *dns01cf* environment variable to `false` or simply delete it.
 
-3. Configure your ACME client to make a *POST* call to `dns01cf.foobar.workers.dev/dns01cf/set_record` or `dns01cf.foobar.workers.dev/dns01cf/delete_record` (replace `dns01cf.foobar.workers.dev` with your CloudFlare Worker hostname), with a JSON payload as follows:
+3. Configure your ACME client to make a *POST* call to `dns01cf.foobar.workers.dev/dns01cf/set_record` or `dns01cf.foobar.workers.dev/dns01cf/delete_record` (replace `dns01cf.foobar.workers.dev` with your CloudFlare Worker hostname), with a JSON payload like below. Your ACME client will also need to set an "Authorization" request header with a value of `Bearer [token]` (where `[token]` is the ACME client token you generated earlier).
 
    ```json
    {
