@@ -1,4 +1,5 @@
 # Wrangler configuration for Github CI/CD tests
+# You do not need this for normal usage
 name = "dns01cf-github"
 main = "worker.js"
 compatibility_date = "2022-07-12"
