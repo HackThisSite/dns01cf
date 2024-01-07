@@ -4,13 +4,13 @@
 
 ## DESCRIPTION
 
-*dns01cf* is a single-file, Wrangler-free CloudFlare Worker that enables ACME DNS-01 validation while protecting your DNS with granular ACLs. Installation takes just a few minutes and can be done directly in the CloudFlare web UI -- no installation of Git, Wrangler, or anything required!
+*dns01cf* is a single-file, Wrangler-free Cloudflare Worker that enables ACME DNS-01 validation while protecting your DNS with granular ACLs. Installation takes just a few minutes and can be done directly in the Cloudflare web UI -- no installation of Git, Wrangler, or anything required!
 
-:heavy_check_mark: **Fast Installation**: Deploying *dns01cf* requires only three steps: 1) Create a new CloudFlare API token, 2) Create a new CloudFlare Worker and copy the contents of the [`worker.js`](worker.js) file from this repository into that new Worker, 3) Set the required and any desired optional environment variables, and deploy!
+:heavy_check_mark: **Fast Installation**: Deploying *dns01cf* requires only three steps: 1) Create a new Cloudflare API token, 2) Create a new Cloudflare Worker and copy the contents of the [`worker.js`](worker.js) file from this repository into that new Worker, 3) Set the required and any desired optional environment variables, and deploy!
 
 :heavy_check_mark: **Secure DNS**: ACME clients can only modify TXT records strictly within the ACLs you define for each client.
 
-:heavy_check_mark: **Minimal CloudFlare Dependency**: Only one domain needs to be behind CloudFlare, the rest can be anywhere. *dns01cf* is best used with [domain aliasing](https://dan.langille.org/2019/02/01/acme-domain-alias-mode/).
+:heavy_check_mark: **Minimal Cloudflare Dependency**: Only one domain needs to be behind Cloudflare, the rest can be anywhere. *dns01cf* is best used with [domain aliasing](https://dan.langille.org/2019/02/01/acme-domain-alias-mode/).
 
 :heavy_check_mark: **Many ACME Clients Supported**: If an ACME client does not yet support *dns01cf*, that's okay! It also supports challenges meant for [acme-dns](https://github.com/joohoi/acme-dns), too!
 
@@ -28,9 +28,9 @@ Therefore, *dns01cf* was created to enable a more secure means of completing ACM
 
 ### SCENARIOS
 
-*dns01cf* allows you to perform ACME DNS-01 validation across as many domains and sub-domains as you want, provided at least one of your domains is behind CloudFlare. You do not have to move all of your domains behind CloudFlare to use them with *dns01cf*, nor will *dns01cf* need API or other access to any of them. We will use a validation method known as [domain aliasing](https://dan.langille.org/2019/02/01/acme-domain-alias-mode/), where the `_acme-challenge` DNS-01 validation hostname is set as a CNAME that points to another location where the validation will actually occur.
+*dns01cf* allows you to perform ACME DNS-01 validation across as many domains and sub-domains as you want, provided at least one of your domains is behind Cloudflare. You do not have to move all of your domains behind Cloudflare to use them with *dns01cf*, nor will *dns01cf* need API or other access to any of them. We will use a validation method known as [domain aliasing](https://dan.langille.org/2019/02/01/acme-domain-alias-mode/), where the `_acme-challenge` DNS-01 validation hostname is set as a CNAME that points to another location where the validation will actually occur.
 
-#### One domain behind CloudFlare (Domain Aliasing)
+#### One domain behind Cloudflare (Domain Aliasing)
 
 Designate a domain that will act as the central ACME DNS-01 challenge domain. (We will use `dns-domain.com` in our examples.) If you prefer, you can also designate one or more sub-domains where all ACME DNS-01 challenges will be consolidated. (We will use `acme-challenges.dns-domain.com` in our examples.)
 
@@ -48,9 +48,9 @@ This looks complicated, so let's break it down:
 
 You only need to set this DNS CNAME once, then you can define your ACME client token ACLs and subject with granular control over exactly what DNS records each ACME client can modify in a central location.
 
-#### All domains behind CloudFlare
+#### All domains behind Cloudflare
 
-Alternatively, if all of the domains that will use *dns01cf* are behind CloudFlare, then setup is straightforward. Simply ensure the CloudFlare API token that *dns01cf* will use can access all relevant zones.
+Alternatively, if all of the domains that will use *dns01cf* are behind Cloudflare, then setup is straightforward. Simply ensure the Cloudflare API token that *dns01cf* will use can access all relevant zones.
 
 ## DOCUMENTATION
 
@@ -59,9 +59,9 @@ Alternatively, if all of the domains that will use *dns01cf* are behind CloudFla
 
 ### INSTALLATION
 
-> These instructions assume you already have an existing CloudFlare account with at least one domain added. We will use `dns-domain.com` in the examples below.
+> These instructions assume you already have an existing Cloudflare account with at least one domain added. We will use `dns-domain.com` in the examples below.
 
-1. First, you will need to generate a CloudFlare API token for *dns01cf* to use. This token will need the following two permissions on the zones you want *dns01cf* to access.
+1. First, you will need to generate a Cloudflare API token for *dns01cf* to use. This token will need the following two permissions on the zones you want *dns01cf* to access.
 >
 
     Level: Zone
@@ -72,9 +72,9 @@ Alternatively, if all of the domains that will use *dns01cf* are behind CloudFla
     Category: Zone
     Access: Read
 
-2. Next, create a new CloudFlare Worker for *dns01cf*. Open the Quick Edit editor, clear the contents and copy the contents of the [`worker.js`](worker.js) file in this repository into the editor, then click "Save and deploy".
+2. Next, create a new Cloudflare Worker for *dns01cf*. Open the Quick Edit editor, clear the contents and copy the contents of the [`worker.js`](worker.js) file in this repository into the editor, then click "Save and deploy".
 
-   *Note: This documentation will assume you named your CloudFlare Worker `dns01cf` and will use an example Worker hostname of `dns01cf.foobar.workers.dev`.*
+   *Note: This documentation will assume you named your Cloudflare Worker `dns01cf` and will use an example Worker hostname of `dns01cf.foobar.workers.dev`.*
 
 3. Then navigate to the *dns01cf* Worker Settings tab and add the following three environment variables listed below, as well as any of the optional ones listed on the [documentation site](https://dns01cf.com).
 
@@ -83,7 +83,7 @@ Alternatively, if all of the domains that will use *dns01cf* are behind CloudFla
 
    `CF_API_TOKEN`
 
-   * Set this to the CloudFlare API token you created a moment ago.
+   * Set this to the Cloudflare API token you created a moment ago.
 
    `TOKEN_SECRET`
 
@@ -107,7 +107,7 @@ Alternatively, if all of the domains that will use *dns01cf* are behind CloudFla
 
 Note: To create an ACME client token in step one, you must make sure the `ENABLE_CREATE_TOKEN` environment variable is set to `true` as described in [INSTALLATION](#installation) above.
 
-1. Create an ACME client token by sending a *POST* call to `dns01cf.foobar.workers.dev/dns01cf/create_token` (replace `dns01cf.foobar.workers.dev` with your CloudFlare Worker hostname), with a JSON payload like below. You will also need to set an "Authorization" request header with a value of the secret you set for the `TOKEN_SECRET` environment variable in [INSTALLATION](#installation) above. (Do not prefix the value with "Bearer " or anything else.)
+1. Create an ACME client token by sending a *POST* call to `dns01cf.foobar.workers.dev/dns01cf/create_token` (replace `dns01cf.foobar.workers.dev` with your Cloudflare Worker hostname), with a JSON payload like below. You will also need to set an "Authorization" request header with a value of the secret you set for the `TOKEN_SECRET` environment variable in [INSTALLATION](#installation) above. (Do not prefix the value with "Bearer " or anything else.)
 
     ```json
     {
@@ -133,13 +133,13 @@ Note: To create an ACME client token in step one, you must make sure the `ENABLE
 
     *NOTE:* Wildcards are supported! This uses the [URLPattern API](https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API), however it is strongly recommended that you only use [wildcard tokens](https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API#wildcard_tokens) and not full regular expressions.
 
-    *WARNING:* When using wildcards while `aud` is not defined, be careful if using wildcards in the root domain especially if you have multiple similar domains. For example, if an ACME client has an ACL of "foo*com" and you have domains of foobar.com and foofoo.com, *dns01cf* will choose whichever zone CloudFlare returns first and attempt to assign the DNS record to that zone.
+    *WARNING:* When using wildcards while `aud` is not defined, be careful if using wildcards in the root domain especially if you have multiple similar domains. For example, if an ACME client has an ACL of "foo*com" and you have domains of foobar.com and foofoo.com, *dns01cf* will choose whichever zone Cloudflare returns first and attempt to assign the DNS record to that zone.
 
    `aud`
 
-   * *[OPTIONAL]* A single CloudFlare Zone ID which if set will limit the ACME client to only this zone.
+   * *[OPTIONAL]* A single Cloudflare Zone ID which if set will limit the ACME client to only this zone.
 
-   Setting this also improves performance by removing the need for *dns01cf* to perform a CloudFlare Zone ID lookup for each ACME client call.
+   Setting this also improves performance by removing the need for *dns01cf* to perform a Cloudflare Zone ID lookup for each ACME client call.
 
      *NOTE:* If this is set, `sub` (if also set) must match this zone ID. Otherwise all domains in `acl` must match this zone ID.
 
@@ -149,13 +149,13 @@ Note: To create an ACME client token in step one, you must make sure the `ENABLE
 
    `sub`
 
-   * *[OPTIONAL]* A single hostname containing a valid domain in your CloudFlare account that will act as a prefix for all ACLs and ACME DNS-01 challenges.
+   * *[OPTIONAL]* A single hostname containing a valid domain in your Cloudflare account that will act as a prefix for all ACLs and ACME DNS-01 challenges.
 
    If you have many ACLs all using the same root domain or sub-domain (e.g. `acme-challenges.dns-domain.com`), you can instead simply define that here rather than add it to each ACL entry.
 
 2. When you are finished creating ACME client tokens, you should change the `ENABLE_CREATE_TOKEN` *dns01cf* environment variable to `false` or simply delete it.
 
-3. Configure your ACME client to make a *POST* call to `dns01cf.foobar.workers.dev/dns01cf/set_record` or `dns01cf.foobar.workers.dev/dns01cf/delete_record` (replace `dns01cf.foobar.workers.dev` with your CloudFlare Worker hostname), with a JSON payload like below. Your ACME client will also need to set an "Authorization" request header with a value of `Bearer [token]` (where `[token]` is the ACME client token you generated earlier).
+3. Configure your ACME client to make a *POST* call to `dns01cf.foobar.workers.dev/dns01cf/set_record` or `dns01cf.foobar.workers.dev/dns01cf/delete_record` (replace `dns01cf.foobar.workers.dev` with your Cloudflare Worker hostname), with a JSON payload like below. Your ACME client will also need to set an "Authorization" request header with a value of `Bearer [token]` (where `[token]` is the ACME client token you generated earlier).
 
    ```json
    {
@@ -171,7 +171,7 @@ Note: To create an ACME client token in step one, you must make sure the `ENABLE
 *dns01cf* uses the following softwares and services:
 
 * JavaScript
-* CloudFlare
+* Cloudflare
 * GitHub
 * Parts of [tsndr/cloudflare-worker-jwt](https://github.com/tsndr/cloudflare-worker-jwt)
 
