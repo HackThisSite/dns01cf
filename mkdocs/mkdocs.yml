@@ -2,8 +2,9 @@ site_name: dns01cf
 site_url: https://dns01cf.com
 repo_name: hackthissite/dns01cf
 repo_url: https://github.com/hackthissite/dns01cf
+edit_uri: mkdocs/docs/
 
-description: CloudFlare Worker for ACME DNS-01 validation with granular client ACLs
+site_description: CloudFlare Worker for ACME DNS-01 validation with granular client ACLs
 copyright: HackThisSite
 
 theme:

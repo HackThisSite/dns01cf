@@ -11,11 +11,11 @@
 
 *dns01cf* is a single-file, Wrangler-free CloudFlare Worker that performs ACME DNS-01 validation for domains behind CloudFlare while protecting your account with granular client ACLs. Installation takes under 5 minutes and can be done directly in the CloudFlare web UI -- no installation of Git, Wrangler, or anything required!
 
-:heavy_check_mark: **Fast Installation**: Deploying *dns01cf* requires only three steps: 1) Create a new CloudFlare API token, 2) Create a new CloudFlare Worker and copy the contents of the `worker.js` file from this repository into that new Worker, 3) Set the required and any desired optional environment variables
+✔️ **Fast Installation**: Deploying *dns01cf* requires only three steps: 1) Create a new CloudFlare API token, 2) Create a new CloudFlare Worker and copy the contents of the [`worker.js`](https://github.com/HackThisSite/dns01cf/blob/main/worker.js) file in the [dns01cf repository](https://github.com/HackThisSite/dns01cf) into that new Worker, 3) Set the required and any desired optional environment variables
 
-:heavy_check_mark: **Secure DNS**: ACME clients can only update TXT records strictly within the ACLs you define for each client.
+✔️ **Secure DNS**: ACME clients can only update TXT records strictly within the ACLs you define for each client.
 
-:heavy_check_mark: **Many ACME Clients Supported**: If an ACME client does not yet support *dns01cf*, that's okay! It also supports challenges meant for [acme-dns](https://github.com/joohoi/acme-dns), too!
+✔️ **Many ACME Clients Supported**: If an ACME client does not yet support *dns01cf*, that's okay! It also supports challenges meant for [acme-dns](https://github.com/joohoi/acme-dns), too!
 
 ## Why is *dns01cf* needed?
 
