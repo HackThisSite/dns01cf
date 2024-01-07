@@ -22,9 +22,9 @@ In their documentation for Challenge Types, [Let's Encrypt even states the follo
 
 > Keeping API credentials on your web server is risky.
 
-Nearly all DNS providers with APIs give effectively all-or-nothing API access to a whole zone (domain), if not all zones in the account. If an ACME client with DNS API credentials is compromised, all of the zones those API credentials have access to are compromised as well. This is true for CloudFlare API tokens as well.
+Nearly all DNS providers with APIs give effectively all-or-nothing API access to a whole zone (domain), if not all zones in the account. If an ACME client with DNS API credentials is compromised, all of the zones those API credentials have access to are compromised as well.
 
-Therefore, *dns01cf* was created to enable a more secure means of completing ACME DNS-01 challenges without unnecessarily exposing entire DNS zones to all clients. Furthermore, to make *dns01cf* fast to install and easy to use, it has been kept limited a single file with pure JavaScript and no dependencies that requires minimal configuration.
+Therefore, *dns01cf* was created to enable a more secure means of completing ACME DNS-01 challenges without unnecessarily exposing entire DNS zones to all clients. Furthermore, to make *dns01cf* fast to install and easy to use, it has been kept limited a single file with pure JavaScript and no dependencies while requiring minimal configuration.
 
 ### SCENARIOS
 
