@@ -1,6 +1,7 @@
 # dns01cf
 
-[build status]
+[![Cloudflare CI/CD](https://github.com/HackThisSite/dns01cf/actions/workflows/cloudflare-cicd.yml/badge.svg?branch=main)](https://github.com/HackThisSite/dns01cf/actions/workflows/cloudflare-cicd.yml)
+[![CodeQL](https://github.com/HackThisSite/dns01cf/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/HackThisSite/dns01cf/actions/workflows/github-code-scanning/codeql)
 
 ## DESCRIPTION
 
