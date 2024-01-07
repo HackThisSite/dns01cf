@@ -19,8 +19,9 @@ jobs:
           secrets: |
             CF_API_TOKEN
             TOKEN_SECRET
+            ENABLE_CREATE_TOKEN
           command: deploy
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           TOKEN_SECRET: ${{ secrets.TOKEN_SECRET }}
-          ENABLE_CREATE_TOKEN: true
+          ENABLE_CREATE_TOKEN: ${{ secrets.ENABLE_CREATE_TOKEN }}
