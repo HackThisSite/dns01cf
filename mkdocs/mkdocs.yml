@@ -14,8 +14,7 @@ theme:
 
 markdown_extensions:
   smarty: {}
-  toc:
-    permalink: true
+  toc: {}
   admonition: {}
 
 nav:
