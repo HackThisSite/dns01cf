@@ -17,10 +17,10 @@ jobs:
           apiToken: ${{ secrets.CFAT_WORKER_DEPLOYMENT }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           secrets: |
-            CFAT_CICD_TEST
-            CICD_TOKEN_SECRET
+            CF_API_TOKEN
+            TOKEN_SECRET
           command: deploy worker.js --compatibility-date "2022-07-12" --name dns01cf-github --route "github-cicd.dns01cf.com/*"
         env:
-          CF_API_TOKEN: ${{ secrets.CFAT_CICD_TEST }}
-          TOKEN_SECRET: ${{ secrets.CICD_TOKEN_SECRET }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          TOKEN_SECRET: ${{ secrets.TOKEN_SECRET }}
           ENABLE_CREATE_TOKEN: true
