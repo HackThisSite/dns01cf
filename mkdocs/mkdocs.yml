@@ -12,6 +12,12 @@ theme:
   logo: img/dns01cf.png
   favicon: img/favicon.ico
 
+markdown_extensions:
+  smarty: {}
+  toc:
+    permalink: true
+  admonition: {}
+
 nav:
   - 'Home': index.md
   - 'Docs':
