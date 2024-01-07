@@ -13,7 +13,7 @@
 
 :heavy_check_mark: **Minimal Cloudflare Dependency**: Only one domain needs to be behind Cloudflare, the rest can be anywhere. *dns01cf* is best used with [domain aliasing](https://dan.langille.org/2019/02/01/acme-domain-alias-mode/).
 
-:heavy_check_mark: **Many ACME Clients Supported**: If an ACME client does not yet support *dns01cf*, that's okay! It also supports challenges meant for [acme-dns](https://github.com/joohoi/acme-dns), too!
+:heavy_check_mark: **Many ACME Clients Supported**: If an ACME client does not yet support *dns01cf*, that's okay! It also supports challenges meant for [acme-dns](https://github.com/joohoi/acme-dns), too, and more are coming soon.
 
 ### WHY?
 
