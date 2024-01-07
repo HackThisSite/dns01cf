@@ -1,0 +1,6 @@
+# Wrangler configuration for Github CI/CD tests
+name = "dns01cf-github"
+main = "worker.js"
+compatibility_date = "2022-07-12"
+workers_dev = false
+route = { pattern = "github-cicd.dns01cf.com/*", zone_name = "dns01cf.com" }

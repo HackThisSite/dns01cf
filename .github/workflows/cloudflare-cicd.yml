@@ -19,7 +19,7 @@ jobs:
           secrets: |
             CF_API_TOKEN
             TOKEN_SECRET
-          command: deploy worker.js --compatibility-date "2022-07-12" --name dns01cf-github --route "github-cicd.dns01cf.com/*"
+          command: deploy
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           TOKEN_SECRET: ${{ secrets.TOKEN_SECRET }}
