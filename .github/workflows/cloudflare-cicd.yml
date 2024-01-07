@@ -15,4 +15,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CFAT_WORKER_DEPLOYMENT }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: deploy worker.js --compatibility-date "2022-07-12" --name dns01cf-github --route "dns01cf-github.hts.workers.dev/*"
+          command: deploy worker.js --compatibility-date "2022-07-12" --name dns01cf-github --route "github-cicd.dns01cf.com/*"
