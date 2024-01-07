@@ -36,7 +36,7 @@ First, you will need to generate a CloudFlare API token for *dns01cf* to use. Th
 
 ### CLOUDFLARE WORKER
 
-Create a new CloudFlare Worker, open the Quick Edit editor, clear the contents and copy the contents of the [`worker.js`](worker.js) file in this repository into the CloudFlare editor, save and deploy.
+Create a new CloudFlare Worker, open the Quick Edit editor, clear the contents and copy the contents of the [`worker.js`](https://github.com/HackThisSite/dns01cf/blob/main/worker.js) file in the [dns01cf repository](https://github.com/HackThisSite/dns01cf) into the CloudFlare editor, save and deploy.
 
 <details>
 
