@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- * @version 0.0.1
+ * @version 0.0.2
  * @author dns01cf team <team@dns01cf.com>
  * @see {@link https://dns01cf.com}
  * @license MIT
@@ -32,7 +32,7 @@
  * @type {Object}
  */
 const DNS01CF = {
-  version: '0.0.1',
+  version: '0.0.2',
   urls: {
     website: 'https://dns01cf.com',
     github: 'https://github.com/dns01d/dns01cf',
@@ -232,7 +232,7 @@ function preFlightCheck(env) {
     DNS01CF.config.RECORD_EXPIRATION = DNS01CF.defaults.RECORD_EXPIRATION;
   }
   // CF_ZONE_ID
-  if (env.CF_ZONE_ID1) {
+  if (env.CF_ZONE_ID) {
     if (String(env.CF_ZONE_ID).length > 32 || env.CF_ZONE_ID.match(/[^0-9a-z]/i))
       throw new Error("'CF_ZONE_ID' is too long or has invalid characters");
     DNS01CF.config.CF_ZONE_ID = env.CF_ZONE_ID;
@@ -352,7 +352,8 @@ class CFAPI {
         throw new Error(`Unparseable error during response. JSON returned: ${json}`);
       }
     }
-    if (res.result) return res.result;
+    if (typeof res.result !== 'undefined') return res.result;
+    // If we made it this far, we got a very unexpected response from Cloudflare
     const json = JSON.stringify(res);
     throw new Error(`Received OK response but no result object returned. JSON returned: ${json}`);
   }
@@ -401,13 +402,17 @@ class CFAPI {
     ];
     const init = {
       method: "POST",
-      body: {
-        comment: comment.join(':'),
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        proxied: false,
+        comment: comment.join('!'),
         ttl: DNS01CF.config.RECORD_TTL,
         type: "TXT",
         name: record,
         content: content
-      }
+      }),
     };
     const res = await this._call(`/zones/${zoneID}/dns_records`, init);
     return {
@@ -431,15 +436,14 @@ class CFAPI {
   static async deleteRecordByValue(zoneID, record, content) {
     const record_enc  = encodeURI(record);
     const content_enc = encodeURI(content);
-    const res_find = await this._call(`/zones/${zoneID}/dns_records?match=all&type=TXT&comment.endswith=%3Adns01cf&name=${record_enc}&content=${content_enc}`);
-    const len = Array(res_find).length;
-    if (len === 0) {
+    const res_find = await this._call(`/zones/${zoneID}/dns_records?match=all&type=TXT&comment.endswith=%21dns01cf&name=${record_enc}&content=${content_enc}`);
+    if (typeof res_find[0] === 'undefined' || !res_find[0].name) {
       throw new Error(`Cannot find TXT record matching '${record}' = '${content}'`);
-    } else if (len !== 1) {
-      throw new Error(`Received ${len} records, expected only exactly one`);
+    } else if (res_find.length !== 1) {
+      throw new Error(`Received ${res_find.length} records, expected only exactly one`);
     }
     const rec = res_find[0];
-    const comment = rec.comment.split(':');
+    const comment = rec.comment.split('!');
     if (comment.length === 3 && String(comment[2]) === "dns01cf") {
       try {
         const json = JSON.parse(comment[1]);
@@ -472,7 +476,7 @@ class CFAPI {
    * @returns {Promise<Array>}
    */
   static async deleteOldRecords(zoneID) {
-    const res_find = await this._call(`/zones/${zoneID}/dns_records?match=all&type=TXT&comment.endswith=%3Adns01cf`);
+    const res_find = await this._call(`/zones/${zoneID}/dns_records?match=all&type=TXT&comment.endswith=%21dns01cf`);
     let deleted = [];
     for (let r in res_find) {
       const comment = res_find[r].comment.split(':');
@@ -549,6 +553,7 @@ class Listener {
         const bearertoken = authheader.split(' ');
         const authtok = new AuthToken(DNS01CF.config.TOKEN_SECRET, env);
         let json;
+        let zone_id;
         try {
           json = await req.json();
         } catch (e) {
@@ -573,7 +578,6 @@ class Listener {
             }
             // - JWT audience
             let cf_zone;
-            let zone_id;
             if (json.aud) {
               if (json.aud.length > 32 || json.aud.match(/[^0-9a-z]/i))
                 return dns01cf_error("'aud' is too long or has invalid characters", { status: 400 });
@@ -661,7 +665,8 @@ class Listener {
           case "set_record":
           case "delete_record":
             const set_action = (pathres.pathname.groups.action === "set_record");
-            if (!json.fqdn || !authtok.testHostname(json.fqdn))
+            const testFQDN = authtok.testHostname(json.fqdn);
+            if (!json.fqdn || !testFQDN)
               return dns01cf_error("Missing or invalid JSON parameter: fqdn", { status: 400 });
             if (!json.value)
               return dns01cf_error("Missing or invalid JSON parameter: value", { status: 400 });
@@ -671,36 +676,43 @@ class Listener {
               const acl_valid = await authtok.validateTokenACLFQDN(bearertoken[1], json.fqdn);
               if (!acl_valid)
                 return dns01cf_error(`Not authorized for FQDN: ${json.fqdn}`, { status: 403 });
-              const tok_parts = authtok.decodeToken(bearertoken[1]);
-              // Get CloudFlare Zone ID
-              let zone_id = tok_parts.aud || DNS01CF.config.CF_ZONE_ID;
-              if (!zone_id) {
-                try {
-                  const zones = await CFAPI.listZones();
-                  let z = 0;
-                  while (zones[z] && !zone_id) {
-                    if (String(json.fqdn).endsWith(zones[z].name))
-                      zone_id = zones[z].id;
-                    z++;
-                  }
-                } catch (e) {
-                  return dns01cf_error(`Unable to list zones: ${e.message}`, { status: 500 });
-                }
-              }
-              if (!zone_id)
-                return dns01cf_error(`Token 'aud' and config 'CF_ZONE_ID' not set, and unable to find CloudFlare Zone ID for ${json.fqdn} from API lookup`, { status: 500 });
-              if (set_action) {
-                CFAPI.setRecord(zone_id, json.fqdn, json.value);
-              } else {
-                CFAPI.deleteRecordByValue(zone_id, json.fqdn, json.value);
-              }
-              return dns01cf_response({
-                result: "ok",
-                message: set_action ? `'${json.fqdn}' set to value '${json.value}'` : `'${json.fqdn}' with value '${json.value}' deleted`
-              }, { status: 200 }, { json: true });
             } catch (e) {
               return dns01cf_error(`Invalid token: ${e.message}`, { status: 403 });
             }
+            const tok_parts = authtok.decodeToken(bearertoken[1]);
+            // Get CloudFlare Zone ID
+            zone_id = tok_parts.aud || DNS01CF.config.CF_ZONE_ID;
+            if (!zone_id) {
+              try {
+                const zones = await CFAPI.listZones();
+                let z = 0;
+                while (zones[z] && !zone_id) {
+                  if (String(json.fqdn).endsWith(zones[z].name))
+                    zone_id = zones[z].id;
+                  z++;
+                }
+              } catch (e) {
+                return dns01cf_error(`Unable to list zones: ${e.message}`, { status: 500 });
+              }
+            }
+            if (!zone_id)
+              return dns01cf_error(`Token 'aud' and config 'CF_ZONE_ID' not set, and unable to find CloudFlare Zone ID for ${json.fqdn} from API lookup`, { status: 500 });
+            let actres;
+            try {
+              if (set_action) {
+                actres = await CFAPI.setRecord(zone_id, json.fqdn, json.value);
+              } else {
+                actres = await CFAPI.deleteRecordByValue(zone_id, json.fqdn, json.value);
+              }
+              
+            } catch (e) {
+              return dns01cf_error(`Error during DNS update: ${e.message}`, { status: 500 });
+            }
+            return dns01cf_response({
+              result: "ok",
+              message: set_action ? `'${json.fqdn}' set to value '${json.value}'` : `'${json.fqdn}' with value '${json.value}' deleted`,
+              response: actres
+            }, { status: 200 }, { json: true });
             break;
           default:
             return null;
@@ -904,13 +916,21 @@ class AuthToken {
     for (let acl of tok.payload.acl) {
       const host = tok.payload.sub ? `${acl}.${tok.payload.sub}` : acl;
       if (host.startsWith('!')) {
-        const p = new URLPattern({ hostname: host.substring(1) });
-        if (p.test({ hostname: fqdn }))
+        if (this.testHostnamePattern(host.substring(1), fqdn))
           return false;
       } else {
-        const p = new URLPattern({ hostname: host });
-        if (p.test({ hostname: fqdn }))
+        if (this.testHostnamePattern(host, fqdn))
           return true;
+      }
+      // If ACL_STRICT_ACME_HOSTNAME is not enabled, also implicitly grant and test an `_acme-challenge.` prefix on the ACL
+      if (!DNS01CF.config.ACL_STRICT_ACME_HOSTNAME) {
+        if (host.startsWith('!')) {
+          if (this.testHostnamePattern(`_acme-challenge.${host.substring(1)}`, fqdn))
+            return false;
+        } else {
+          if (this.testHostnamePattern(`_acme-challenge.${host}`, fqdn))
+            return true;
+        }
       }
     }
     return false;
@@ -935,20 +955,33 @@ class AuthToken {
 
   /**
    * Test that a hostname is a proper FQDN, also allowing for asterisk wildcards and exlamation negation
+   * Also allows for an underscore prefix for `_acme-challenge`
    * @param {String} hostname Hostname to test
    * @returns {Boolean} Result of the test
    */
   testACLHostname(hostname) {
-    return new RegExp("^(?=^.{4,253}\.?$)(^((?!-)!?[a-zA-Z0-9-\*]{1,63}(?<!-)\.)+[a-zA-Z\*]{2,63}$)$", "g").test(hostname);
+    return new RegExp("^(?=^.{4,253}\.?$)(^_?((?!-)!?[a-zA-Z0-9-\*]{1,63}(?<!-)\.)+[a-zA-Z\*]{2,63}$)$", "g").test(hostname);
   }
 
   /**
    * Test that a hostname is a proper FQDN
+   * Also allows for an underscore prefix for `_acme-challenge`
    * @param {String} hostname Hostname to test
    * @returns {Boolean} Result of the test
    */
   testHostname(hostname) {
-    return new RegExp("^(?=^.{4,253}\.?$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)$", "g").test(hostname);
+    return new RegExp("^(?=^.{4,253}\.?$)(^_?((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)$", "g").test(hostname);
+  }
+
+  /**
+   * Test a URLPattern hostname against another hostname
+   * @param {String} pattern A hostname for URLPattern
+   * @param {String} hostname The hostname to test
+   * @returns {Boolean} The result of URLPattern.test()
+   */
+  testHostnamePattern(pattern, hostname) {
+    const p = new URLPattern({ hostname: pattern });
+    return p.test({ hostname: hostname });
   }
 
   /**
