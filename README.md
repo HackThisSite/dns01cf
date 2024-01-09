@@ -5,27 +5,19 @@
 
 ## DESCRIPTION
 
-*dns01cf* is a single-file, Wrangler-free Cloudflare Worker that enables ACME DNS-01 validation while protecting your DNS with granular ACLs. Installation takes just a few minutes and can be done directly in the Cloudflare web UI -- no installation of Git, Wrangler, or anything required!
+*dns01cf* is a single-file, Wrangler-free Cloudflare Worker that enables ACME DNS-01 validation while protecting your DNS with granular ACLs. Only one domain needs to be behind Cloudflare, the rest can be anywhere.
 
-:heavy_check_mark: **Fast Installation**: Deploying *dns01cf* requires only three steps: 1) Create a new Cloudflare API token, 2) Create a new Cloudflare Worker and copy the contents of the [`worker.js`](worker.js) file from this repository into that new Worker, 3) Set the required and any desired optional environment variables, and deploy!
+Installation takes just a few minutes and can be done directly in the Cloudflare web UI -- no installation of Git, Wrangler, or anything required!
 
-:heavy_check_mark: **Secure DNS**: ACME clients can only modify TXT records strictly within the ACLs you define for each client.
+### FEATURES
 
-:heavy_check_mark: **Minimal Cloudflare Dependency**: Only one domain needs to be behind Cloudflare, the rest can be anywhere. *dns01cf* is best used with [domain aliasing](https://dan.langille.org/2019/02/01/acme-domain-alias-mode/).
+:heavy_check_mark: **[Fast Installation](#installation)**: Deploying *dns01cf* requires only three main steps: 1) Create a new Cloudflare API token, 2) Create a new Cloudflare Worker and copy the contents of the [`worker.js`](worker.js) file from this repository into that new Worker, 3) Set the required and any desired optional environment variables, and deploy!
 
-:heavy_check_mark: **Many ACME Clients Supported**: If an ACME client does not yet support *dns01cf*, that's okay! It also supports challenges meant for [acme-dns](https://github.com/joohoi/acme-dns), too, and more are coming soon.
+:heavy_check_mark: **[Secure DNS](#usage)**: ACME clients can only modify TXT records strictly within the ACLs you define for each client.
 
-### WHY?
+:heavy_check_mark: **[Minimal Cloudflare Dependency](#one-domain-behind-cloudflare-domain-aliasing)**: Only one domain needs to be behind Cloudflare, the rest can be anywhere. *dns01cf* is best used with [domain aliasing](https://dan.langille.org/2019/02/01/acme-domain-alias-mode/).
 
-When using the [ACME protocol](https://en.wikipedia.org/wiki/Automatic_Certificate_Management_Environment) to obtain a free TLS certificate, currently the only challenge type available for wildcard certificates is DNS-01. However this method requires that all ACME clients requesting wildcard certificates be given access to perform DNS changes.
-
-In their documentation for Challenge Types, [Let's Encrypt even states the following risk for DNS-01](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge):
-
-> Keeping API credentials on your web server is risky.
-
-Nearly all DNS providers with APIs give effectively all-or-nothing API access to a whole zone (domain), if not all zones in the account. If an ACME client with DNS API credentials is compromised, all of the zones those API credentials have access to are compromised as well.
-
-Therefore, *dns01cf* was created to enable a more secure means of completing ACME DNS-01 challenges without unnecessarily exposing entire DNS zones to all clients. Furthermore, to make *dns01cf* fast to install and easy to use, it has been kept limited a single file with pure JavaScript and no dependencies while requiring minimal configuration.
+:heavy_check_mark: **[Many ACME Clients Supported](#usage)**: If an ACME client does not yet support *dns01cf*, that's okay! It also supports challenges meant for [acme-dns](https://github.com/joohoi/acme-dns), too, and more are coming soon.
 
 ### SCENARIOS
 
@@ -52,6 +44,18 @@ You only need to set this DNS CNAME once, then you can define your ACME client t
 #### All domains behind Cloudflare
 
 Alternatively, if all of the domains that will use *dns01cf* are behind Cloudflare, then setup is straightforward. Simply ensure the Cloudflare API token that *dns01cf* will use can access all relevant zones.
+
+### WHY?
+
+When using the [ACME protocol](https://en.wikipedia.org/wiki/Automatic_Certificate_Management_Environment) to obtain a free TLS certificate, currently the only challenge type available for wildcard certificates is DNS-01. However this method requires that all ACME clients requesting wildcard certificates be given access to perform DNS changes.
+
+In their documentation for Challenge Types, [Let's Encrypt even states the following risk for DNS-01](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge):
+
+> Keeping API credentials on your web server is risky.
+
+Nearly all DNS providers with APIs give effectively all-or-nothing API access to a whole zone (domain), if not all zones in the account. If an ACME client with DNS API credentials is compromised, all of the zones those API credentials have access to are compromised as well.
+
+Therefore, *dns01cf* was created to enable a more secure means of completing ACME DNS-01 challenges without unnecessarily exposing entire DNS zones to all clients. Furthermore, to make *dns01cf* fast to install and easy to use, it has been kept limited a single file with pure JavaScript and no dependencies while requiring minimal configuration.
 
 ## DOCUMENTATION
 
@@ -167,6 +171,14 @@ Note: To create an ACME client token in step one, you must make sure the `ENABLE
 
    The example above assumes *dns01cf* is using a domain alias setup as described in [SCENARIOS](#scenarios) above.
 
+## CONTRIBUTING
+
+If you would like to contribute to *dns01cf*, please first read our [contributing](CONTRIBUTING.md) and [code of conduct](CODE_OF_CONDUCT.md) documents. Then [fork this repository](https://github.com/HackThisSite/dns01cf/fork), and open a [pull request](https://github.com/HackThisSite/dns01cf/compare) with your contribution. You will also need to digitally sign a [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_License_Agreement) when submitting your first pull request.
+
+You can also sponsor us by heading to our [DonorBox](https://donorbox.org/donate-to-hackthissite), or by checking our [donation page](https://www.hackthissite.org/donate) for other options.
+
+Thank you for your interest in supporting our work! :heart:
+
 ## ACKNOWLEDGEMENTS
 
 *dns01cf* uses the following softwares and services:
@@ -174,6 +186,7 @@ Note: To create an ACME client token in step one, you must make sure the `ENABLE
 * JavaScript
 * Cloudflare
 * GitHub
+* [CLA Assistant](https://cla-assistant.io/)
 * Parts of [tsndr/cloudflare-worker-jwt](https://github.com/tsndr/cloudflare-worker-jwt)
 
 ## LICENSE
