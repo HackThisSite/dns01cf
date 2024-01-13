@@ -1,6 +1,6 @@
 /**
  * dns01cf - CloudFlare Worker for ACME DNS-01 validation with record-level client ACLs
- * 
+ *
  * Copyright (c) 2024 HackThisSite
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,10 +20,11 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- * 
+ *
  * @version 0.0.2
  * @author dns01cf team <team@dns01cf.com>
  * @see {@link https://dns01cf.com}
+ * @format
  * @license MIT
  */
 
@@ -32,13 +33,13 @@
  * @type {Object}
  */
 const DNS01CF = {
-  version: '0.0.2',
+  version: "0.0.2",
   urls: {
-    website: 'https://dns01cf.com',
-    github: 'https://github.com/dns01d/dns01cf',
-    version: 'https://version.dns01cf.com/latest.json',
-    telemetry: 'https://telemetry.dns01cf.com/send',
-    cf_api: 'https://api.cloudflare.com/client/v4',
+    website: "https://dns01cf.com",
+    github: "https://github.com/dns01d/dns01cf",
+    version: "https://version.dns01cf.com/latest.json",
+    telemetry: "https://telemetry.dns01cf.com/send",
+    cf_api: "https://api.cloudflare.com/client/v4",
   },
   defaults: {
     ACL_STRICT_ACME_HOSTNAME: false,
@@ -66,10 +67,10 @@ const DNS01CF = {
 async function process_request(req, env, ctx) {
   const { pathname } = new URL(req.url);
   // 204 empty responses
-  const null_paths = [undefined, null, '/', '/favicon.ico'];
+  const null_paths = [undefined, null, "/", "/favicon.ico"];
   if (null_paths.includes(pathname)) {
     return dns01cf_response(null, { status: 204 });
-  } else if (pathname === '/robots.txt') {
+  } else if (pathname === "/robots.txt") {
     return dns01cf_response(`User-agent: *\nDisallow: /`);
   }
 
@@ -77,15 +78,16 @@ async function process_request(req, env, ctx) {
   try {
     preFlightCheck(env);
   } catch (e) {
-    return dns01cf_error(`Configuration error: ${e.message}. Config docs can be found at: ${DNS01CF.urls.website}`, { status: 500 });
+    return dns01cf_error(`Configuration error: ${e.message}. Config docs can be found at: ${DNS01CF.urls.website}`, {
+      status: 500,
+    });
   }
 
   // Run through all defined listeners
   try {
     const l = new Listener();
     const res = await l.process(req, env);
-    if (res && res instanceof Response)
-      return res;
+    if (res && res instanceof Response) return res;
   } catch (e) {
     const [, lineno, colno] = e.stack.match(/(\d+):(\d+)/);
     return dns01cf_error(`Runtime error (line ${lineno} col ${colno}): ${e.message}`, { status: 500 });
@@ -107,7 +109,9 @@ async function process_cron(event, env, ctx) {
     preFlightCheck(env);
   } catch (e) {
     console.error(`Configuration error: ${e.message}. Config docs can be found at: ${DNS01CF.urls.website}`);
-    return new Response(`Configuration error: ${e.message}. Config docs can be found at: ${DNS01CF.urls.website}`, { status: 500 });
+    return new Response(`Configuration error: ${e.message}. Config docs can be found at: ${DNS01CF.urls.website}`, {
+      status: 500,
+    });
   }
 
   let cf_zones = [];
@@ -140,15 +144,15 @@ async function process_cron(event, env, ctx) {
         signal: AbortSignal.timeout(DNS01CF.config.API_TIMEOUT),
         method: "POST",
         body: JSON.stringify({
-          version: `dns01cf-v${DNS01CF.version}`
-        })
+          version: `dns01cf-v${DNS01CF.version}`,
+        }),
       });
     } catch (e) {
       console.warn(`Unable to send telemetry: ${e.message}`);
     }
   }
 
-  return new Response('OK');
+  return new Response("OK");
 }
 
 /**
@@ -183,10 +187,8 @@ function preFlightCheck(env) {
   }
   // LISTENERS
   if (env.LISTENERS) {
-    const listeners = String(env.LISTENERS).split(',');
-    for (let l of listeners)
-      if (!Listener.listeners.includes(l))
-        throw new Error("Invalid setting for 'LISTENERS'");
+    const listeners = String(env.LISTENERS).split(",");
+    for (let l of listeners) if (!Listener.listeners.includes(l)) throw new Error("Invalid setting for 'LISTENERS'");
     DNS01CF.config.LISTENERS = env.LISTENERS;
   } else {
     DNS01CF.config.LISTENERS = DNS01CF.defaults.LISTENERS;
@@ -195,26 +197,23 @@ function preFlightCheck(env) {
   DNS01CF.config.DNS01CF_PATH_PREFIX = env.DNS01CF_PATH_PREFIX ?? DNS01CF.defaults.DNS01CF_PATH_PREFIX;
   // API_TIMEOUT
   if (env.API_TIMEOUT) {
-    if (isNaN(env.API_TIMEOUT))
-      throw new Error("'API_TIMEOUT' must be a number");
+    if (isNaN(env.API_TIMEOUT)) throw new Error("'API_TIMEOUT' must be a number");
     DNS01CF.config.API_TIMEOUT = parseInt(env.API_TIMEOUT, 10);
   } else {
     DNS01CF.config.API_TIMEOUT = DNS01CF.defaults.API_TIMEOUT;
   }
   // DAT_MAX_LENGTH
   if (env.DAT_MAX_LENGTH) {
-    if (isNaN(env.DAT_MAX_LENGTH))
-      throw new Error("'DAT_MAX_LENGTH' must be a number");
+    if (isNaN(env.DAT_MAX_LENGTH)) throw new Error("'DAT_MAX_LENGTH' must be a number");
     DNS01CF.config.DAT_MAX_LENGTH = parseInt(env.DAT_MAX_LENGTH, 10);
   } else {
     DNS01CF.config.DAT_MAX_LENGTH = DNS01CF.defaults.DAT_MAX_LENGTH;
   }
   // RECORD_TTL - Must come before RECORD_EXPIRATION
   if (env.RECORD_TTL) {
-    if (isNaN(env.RECORD_TTL))
-      throw new Error("'RECORD_TTL' must be a number");
+    if (isNaN(env.RECORD_TTL)) throw new Error("'RECORD_TTL' must be a number");
     const record_ttl = parseInt(env.RECORD_TTL, 10);
-    if ((record_ttl < 60 || record_ttl !== 1) || record_ttl > 86400)
+    if (record_ttl < 60 || record_ttl !== 1 || record_ttl > 86400)
       throw new Error("'RECORD_TTL' must be between 60 and 86400, or set to 1 for automatic");
     DNS01CF.config.RECORD_TTL = record_ttl;
   } else {
@@ -222,8 +221,7 @@ function preFlightCheck(env) {
   }
   // RECORD_EXPIRATION - Must come after RECORD_TTL
   if (env.RECORD_EXPIRATION) {
-    if (isNaN(env.RECORD_EXPIRATION))
-      throw new Error("'RECORD_EXPIRATION' must be a number");
+    if (isNaN(env.RECORD_EXPIRATION)) throw new Error("'RECORD_EXPIRATION' must be a number");
     const record_exp = parseInt(env.RECORD_EXPIRATION, 10);
     if (record_exp < DNS01CF.config.RECORD_TTL || record_exp > 86400)
       throw new Error(`'RECORD_EXPIRATION' must be between ${DNS01CF.config.RECORD_TTL} and 86400`);
@@ -238,21 +236,21 @@ function preFlightCheck(env) {
     DNS01CF.config.CF_ZONE_ID = env.CF_ZONE_ID;
   }
   // DISABLE_ANON_TELEMETRY
-  DNS01CF.config.DISABLE_ANON_TELEMETRY = env.DISABLE_ANON_TELEMETRY ?
-    (String(env.DISABLE_ANON_TELEMETRY).toLowerCase() === 'true') :
-    DNS01CF.defaults.DISABLE_ANON_TELEMETRY;
+  DNS01CF.config.DISABLE_ANON_TELEMETRY = env.DISABLE_ANON_TELEMETRY
+    ? String(env.DISABLE_ANON_TELEMETRY).toLowerCase() === "true"
+    : DNS01CF.defaults.DISABLE_ANON_TELEMETRY;
   // DISABLE_POWERED_BY
-  DNS01CF.config.DISABLE_POWERED_BY = env.DISABLE_POWERED_BY ?
-    (String(env.DISABLE_POWERED_BY).toLowerCase() === 'true') :
-    DNS01CF.defaults.DISABLE_POWERED_BY;
+  DNS01CF.config.DISABLE_POWERED_BY = env.DISABLE_POWERED_BY
+    ? String(env.DISABLE_POWERED_BY).toLowerCase() === "true"
+    : DNS01CF.defaults.DISABLE_POWERED_BY;
   // ACL_STRICT_ACME_HOSTNAME
-  DNS01CF.config.ACL_STRICT_ACME_HOSTNAME = env.ACL_STRICT_ACME_HOSTNAME ?
-    (String(env.ACL_STRICT_ACME_HOSTNAME).toLowerCase() === 'true') :
-    DNS01CF.defaults.ACL_STRICT_ACME_HOSTNAME;
+  DNS01CF.config.ACL_STRICT_ACME_HOSTNAME = env.ACL_STRICT_ACME_HOSTNAME
+    ? String(env.ACL_STRICT_ACME_HOSTNAME).toLowerCase() === "true"
+    : DNS01CF.defaults.ACL_STRICT_ACME_HOSTNAME;
   // ENABLE_CREATE_TOKEN
-  DNS01CF.config.ENABLE_CREATE_TOKEN = env.ENABLE_CREATE_TOKEN ?
-    (String(env.ENABLE_CREATE_TOKEN).toLowerCase() === 'true') :
-    DNS01CF.defaults.ENABLE_CREATE_TOKEN;
+  DNS01CF.config.ENABLE_CREATE_TOKEN = env.ENABLE_CREATE_TOKEN
+    ? String(env.ENABLE_CREATE_TOKEN).toLowerCase() === "true"
+    : DNS01CF.defaults.ENABLE_CREATE_TOKEN;
   // CF_API_URL - For CI override tests
   if (env.CF_API_URL) {
     try {
@@ -274,13 +272,12 @@ function preFlightCheck(env) {
  * @param {Boolean} [json_settings.pretty=false] If set to True, print human-readable prettified JSON
  * @returns {Response} HTTP Response object
  */
-function dns01cf_response(body = null, init = {}, json_settings = {json: false, pretty: false}) {
+function dns01cf_response(body = null, init = {}, json_settings = { json: false, pretty: false }) {
   if (!init.headers) init.headers = {};
-  if (!DNS01CF.config.DISABLE_POWERED_BY) init.headers['X-Powered-By'] = `dns01cf v${DNS01CF.version} - ${DNS01CF.urls.website}`;
+  if (!DNS01CF.config.DISABLE_POWERED_BY)
+    init.headers["X-Powered-By"] = `dns01cf v${DNS01CF.version} - ${DNS01CF.urls.website}`;
   if (json_settings.json) {
-    return json_settings.pretty ?
-      new Response(JSON.stringify(body, null, 2), init) :
-      Response.json(body, init);
+    return json_settings.pretty ? new Response(JSON.stringify(body, null, 2), init) : Response.json(body, init);
   } else {
     return new Response(body, init);
   }
@@ -294,7 +291,7 @@ function dns01cf_response(body = null, init = {}, json_settings = {json: false, 
  */
 function dns01cf_error(message, init = {}) {
   if (!init.status) init.status = 500;
-  return dns01cf_response({result: "error", message: message}, init, { json: true, pretty: true });
+  return dns01cf_response({ result: "error", message: message }, init, { json: true, pretty: true });
 }
 
 /**
@@ -321,7 +318,7 @@ function dns01cf_error(message, init = {}) {
  */
 class CFAPI {
   /**
-   * 
+   *
    * @param {String} path CloudFlare API path
    * @param {Object} init Settings for fetch() call
    * @throws {Error} Thrown on invalid and error responses from the CloudFlare API
@@ -331,14 +328,14 @@ class CFAPI {
     const url = `${DNS01CF.urls.cf_api}${path}`;
     init.signal = AbortSignal.timeout(DNS01CF.config.API_TIMEOUT);
     if (!init.headers) init.headers = {};
-    init.headers['Authorization'] = `Bearer ${DNS01CF.config.CF_API_TOKEN}`;
+    init.headers["Authorization"] = `Bearer ${DNS01CF.config.CF_API_TOKEN}`;
     const result = await fetch(url, init);
     let res;
     try {
       res = await result.json();
     } catch (e) {
       const body = await result.text();
-      throw new Error(`Error parsing response as JSON: ${e.message}; Body returned: ${body}`);
+      throw new Error(`[CFAPI] Error parsing response as JSON: ${e.message}; Body returned: ${body}`);
     }
     if (!result.ok) {
       if (res.errors) {
@@ -349,17 +346,17 @@ class CFAPI {
         throw new Error(errors.join("; "));
       } else {
         const json = JSON.stringify(res);
-        throw new Error(`Unparseable error during response. JSON returned: ${json}`);
+        throw new Error(`[CFAPI] Unparseable error during response. JSON returned: ${json}`);
       }
     }
-    if (typeof res.result !== 'undefined') return res.result;
+    if (typeof res.result !== "undefined") return res.result;
     // If we made it this far, we got a very unexpected response from Cloudflare
     const json = JSON.stringify(res);
-    throw new Error(`Received OK response but no result object returned. JSON returned: ${json}`);
+    throw new Error(`[CFAPI] Received OK response but no result object returned. JSON returned: ${json}`);
   }
 
   /**
-   * 
+   * List all Cloudflare zones available to us
    * @throws {Error} Thrown on invalid and error responses from the CloudFlare API
    * @returns {Promise<CFZone[]>} List of zone IDs and their domain names
    */
@@ -373,45 +370,62 @@ class CFAPI {
   }
 
   /**
+   * Get a zone by ID
    * @param {String} zoneID Cloudflare zone identifier
-   * @returns {Promise<Object>} The 
+   * @returns {Promise<CFZone>} The zone ID and hostname
    */
   static async getZoneByID(zoneID) {
     const res = await this._call(`/zones/${zoneID}`);
+    if (typeof res.id === "undefined") return null;
     return { id: res.id, name: res.name };
   }
 
   /**
-   * 
-   * @param {String} zoneID 
-   * @param {String} record 
-   * @param {String} content 
+   * Get a zone by hostname
+   * @param {String} name The hostname to lookup in Cloudflare
+   * @param {Boolean} [exactMatch] If false, will check if `name` ends with any zones returned by Cloudflare, otherwise will be an exact match
+   * @returns {Promise<CFZone>} The zone ID and hostname
+   */
+  static async getZoneByName(name, exactMatch = false) {
+    const zones = await CFAPI.listZones();
+    for (let zone of zones) {
+      if ((exactMatch && name === zone.name) || !exactMatch || name.endsWith(zone.name))
+        return { id: zone.id, name: zone.name };
+    }
+    return null;
+  }
+
+  /**
+   *
+   * @param {String} zoneID
+   * @param {String} record
+   * @param {String} content
    * @throws {Error}
    * @returns {Promise<CFRecord>}
    */
   static async setRecord(zoneID, record, content) {
-    const expiry = (Math.floor(Date.now() / 1000) + DNS01CF.config.RECORD_EXPIRATION);
+    const expiry = Math.floor(Date.now() / 1000) + DNS01CF.config.RECORD_EXPIRATION;
     const comment = [
       "MANAGED BY DNS01CF, DO NOT MODIFY",
       JSON.stringify({
         ver: DNS01CF.version,
         set: Math.floor(Date.now() / 1000),
-        exp: expiry
+        exp: expiry,
       }),
-      "dns01cf"
+      "dns01cf",
     ];
     const init = {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         proxied: false,
-        comment: comment.join('!'),
+        comment: comment.join("!"),
         ttl: DNS01CF.config.RECORD_TTL,
         type: "TXT",
         name: record,
-        content: content
+        content: content,
       }),
     };
     const res = await this._call(`/zones/${zoneID}/dns_records`, init);
@@ -421,41 +435,69 @@ class CFAPI {
       ttl: res.ttl,
       expiry: expiry,
       name: res.name,
-      content: res.content
+      content: res.content,
     };
   }
 
+  static validatedns01cfRecord(record) {
+    if (typeof record[0] === "undefined" || !record[0].name) {
+      throw new Error(`Record is invalid`);
+    } else if (record.length !== 1) {
+      throw new Error(`Received ${record.length} records, expected only exactly one`);
+    }
+    const rec = record[0];
+    const comment = rec.comment.split("!");
+    if (comment.length === 3 && String(comment[2]) === "dns01cf") {
+      try {
+        const json = JSON.parse(comment[1]);
+        if (json.exp) {
+          return true;
+        } else {
+          throw new Error("Missing field: exp");
+        }
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
+  }
+
   /**
-   * 
-   * @param {String} zoneID 
-   * @param {String} record 
-   * @param {String} content 
+   *
+   * @param {String} zoneID
+   * @param {String} record
+   * @param {String} content
+   * @param {Boolean} [skipLookup]
    * @throws {Error}
    * @returns {Promise<CFRecord>}
    */
-  static async deleteRecordByValue(zoneID, record, content) {
-    const record_enc  = encodeURI(record);
+  static async deleteRecordByValue(zoneID, record, content, skipLookup = false) {
+    const record_enc = encodeURI(record);
     const content_enc = encodeURI(content);
-    const res_find = await this._call(`/zones/${zoneID}/dns_records?match=all&type=TXT&comment.endswith=%21dns01cf&name=${record_enc}&content=${content_enc}`);
-    if (typeof res_find[0] === 'undefined' || !res_find[0].name) {
+    const res_find = await this._call(
+      `/zones/${zoneID}/dns_records?match=all&type=TXT&comment.endswith=%21dns01cf&name=${record_enc}&content=${content_enc}`,
+    );
+    if (typeof res_find[0] === "undefined" || !res_find[0].name) {
       throw new Error(`Cannot find TXT record matching '${record}' = '${content}'`);
     } else if (res_find.length !== 1) {
       throw new Error(`Received ${res_find.length} records, expected only exactly one`);
     }
     const rec = res_find[0];
-    const comment = rec.comment.split('!');
+    const comment = rec.comment.split("!");
     if (comment.length === 3 && String(comment[2]) === "dns01cf") {
       try {
         const json = JSON.parse(comment[1]);
         if (json.exp) {
           const res_del = await this._call(`/zones/${zoneID}/dns_records/${rec.id}`, { method: "DELETE" });
+          if (typeof res_del.id === "undefined" || !res_del.id)
+            throw new Error("DNS record delete call failed, nothing returned");
           return {
-            id: rec.id,
+            id: res_del.id,
             type: rec.type,
             ttl: rec.ttl,
             expiry: json.exp,
             name: record,
-            content: content
+            content: content,
           };
         } else {
           throw new Error("Missing field: exp");
@@ -466,31 +508,37 @@ class CFAPI {
         console.warn(`  Metadata (Record comment): ${rec.comment}`);
       }
     }
-
   }
 
   /**
-   * 
-   * @param {String} zoneID 
+   *
+   * @param {String} zoneID
    * @throws {Error}
    * @returns {Promise<Array>}
    */
   static async deleteOldRecords(zoneID) {
     const res_find = await this._call(`/zones/${zoneID}/dns_records?match=all&type=TXT&comment.endswith=%21dns01cf`);
     let deleted = [];
-    for (let r in res_find) {
-      const comment = res_find[r].comment.split(':');
+    for (let rec of res_find) {
+      const comment = rec.comment.split("!");
       if (comment.length === 3 && String(comment[2]) === "dns01cf") {
         try {
           const json = JSON.parse(comment[1]);
           if (json.exp >= Math.floor(Date.now() / 1000)) {
-            const res_del = await this._call(`/zones/${zoneID}/dns_records/${res_find[r].id}`, { method: "DELETE" });
-            deleted.push(res_del.id);
+            const res_del = await this._call(`/zones/${zoneID}/dns_records/${rec.id}`, { method: "DELETE" });
+            deleted.push({
+              id: rec.id,
+              type: rec.type,
+              ttl: rec.ttl,
+              expiry: json.exp,
+              name: rec.name,
+              content: rec.content,
+            });
           }
         } catch (e) {
-          console.warn(`Record '${res_find[r].name}' seems to have been set by dns01cf but its metadata is corrupted.`);
+          console.warn(`Record '${rec.name}' seems to have been set by dns01cf but its metadata is corrupted.`);
           console.warn(`  JSON parse error: ${e.message}`);
-          console.warn(`  Metadata (Record comment): ${res_find[r].comment}`);
+          console.warn(`  Metadata (Record comment): ${rec.comment}`);
         }
       }
     }
@@ -513,7 +561,7 @@ class Listener {
     this.env = env;
     const { pathname } = new URL(request.url);
     this.pathname = pathname;
-    const listeners = String(DNS01CF.config.LISTENERS).split(',');
+    const listeners = String(DNS01CF.config.LISTENERS).split(",");
     for (let l of listeners) {
       if (Object.keys(this.listener_funcs).includes(l)) {
         const res = await this.listener_funcs[l](request, env);
@@ -527,7 +575,7 @@ class Listener {
    * Static list of all listeners, used for fast preFlightCheck()
    * @static
    */
-  static listeners = ['dns01cf', 'acmedns'];
+  static listeners = ["dns01cf", "acmedns"];
 
   /**
    * Listener functions
@@ -539,18 +587,16 @@ class Listener {
      * @param {Object} env The environment bindings assigned to the Worker
      * @returns {Promise<Response>} Parsed FQDN hostname and TXT record value to set
      */
-    dns01cf: async function(req, env) {
+    dns01cf: async function (req, env) {
       const { pathname } = new URL(req.url);
       const pathtest = new URLPattern({ pathname: "/:prefix?/dns01cf/:action(set_record|delete_record|create_token)" });
       if (pathtest.test({ pathname: pathname }) && req.method === "POST") {
         const pathres = pathtest.exec({ pathname: pathname });
         if (DNS01CF.config.DNS01CF_PATH_PREFIX || pathres.pathname.groups.prefix)
-          if (pathres.pathname.groups.prefix !== DNS01CF.config.DNS01CF_PATH_PREFIX)
-            return null;
+          if (pathres.pathname.groups.prefix !== DNS01CF.config.DNS01CF_PATH_PREFIX) return null;
         const authheader = req.headers.get("authorization");
-        if (!authheader)
-          return dns01cf_error("Missing 'Authorization' header", { status: 401 });
-        const bearertoken = authheader.split(' ');
+        if (!authheader) return dns01cf_error("Missing 'Authorization' header", { status: 401 });
+        const bearertoken = authheader.split(" ");
         const authtok = new AuthToken(DNS01CF.config.TOKEN_SECRET, env);
         let json;
         let zone_id;
@@ -566,13 +612,17 @@ class Listener {
             // Tests:
             // - Endpoint enabled
             if (!DNS01CF.config.ENABLE_CREATE_TOKEN)
-              return dns01cf_error(`This endpoint is disabled. Set 'ENABLE_CREATE_TOKEN' to 'true' to enable this endpoint. Config docs can be found at: ${DNS01CF.urls.website}`, { status: 403 });
+              return dns01cf_error(
+                "This endpoint is disabled. Set 'ENABLE_CREATE_TOKEN' to 'true' to enable this endpoint. " +
+                  `Config docs can be found at: ${DNS01CF.urls.website}`,
+                { status: 403 },
+              );
             // - Auth token
             if (authheader !== DNS01CF.config.TOKEN_SECRET)
               return dns01cf_error("Invalid token secret", { status: 403 });
             // - JWT expiration
-            if (typeof json.exp !== 'undefined') {
-              if (typeof json.exp !== 'number' || json.exp <= Math.floor(Date.now() / 1000))
+            if (typeof json.exp !== "undefined") {
+              if (typeof json.exp !== "number" || json.exp <= Math.floor(Date.now() / 1000))
                 return dns01cf_error("'exp' must be an integer Unix timestamp set to a future time", { status: 400 });
               payload.exp = json.exp;
             }
@@ -608,38 +658,52 @@ class Listener {
             if (json.sub) {
               if (!authtok.testHostname(json.sub))
                 return dns01cf_error("'sub' is not a valid hostname", { status: 422 });
-              let z = 0, found = false, hostnames = [];
+              let z = 0,
+                found = false,
+                hostnames = [];
               while (cf_zones[z] && found === false) {
                 const p = new URLPattern({ hostname: `{:subdomain.}*${cf_zones[z].name}` });
-                if (p.test({ hostname: json.sub }))
-                  found = true;
+                if (p.test({ hostname: json.sub })) found = true;
                 hostnames.push(cf_zones[z].name);
                 z++;
               }
               if (!found)
-                return dns01cf_error(`'sub' error: Hostname '${json.sub}' does not have a matching zone. Zone hostnames returned from CloudFlare: ${hostnames.join(', ')}`, { status: 422 });
+                return dns01cf_error(
+                  `'sub' error: Hostname '${json.sub}' does not have a matching zone. ` +
+                    `Zone hostnames returned from CloudFlare: ${hostnames.join(", ")}`,
+                  { status: 422 },
+                );
               payload.sub = json.sub;
             }
             // - ACL
-            if (!json.acl)
-              return dns01cf_error("'acl' is required", { status: 400 });
+            if (!json.acl) return dns01cf_error("'acl' is required", { status: 400 });
             const acl_test = authtok.testACL(json.acl);
-            if (acl_test)
-              return dns01cf_error(`'acl' syntax error: ${acl_test}`, { status: 400 });
+            if (acl_test) return dns01cf_error(`'acl' syntax error: ${acl_test}`, { status: 400 });
             if (!payload.sub) {
               for (let acl of json.acl) {
-                if (String(acl).startsWith('!')) acl = String(acl).substring(1);
+                if (String(acl).startsWith("!")) acl = String(acl).substring(1);
                 const p_acl = new URLPattern({ hostname: acl });
-                let z = 0, found = false, hostnames = [];
+                let z = 0,
+                  found = false,
+                  hostnames = [];
                 while (cf_zones[z] && found === false) {
                   const p_zone = new URLPattern({ hostname: `{:subdomain.}*${cf_zones[z].name}` });
-                  if (p_zone.test({ hostname: acl }) || p_acl.test({ hostname: cf_zones[z].name }) || p_acl.test({ hostname: `.${cf_zones[z].name}` }))
+                  if (
+                    p_zone.test({ hostname: acl }) ||
+                    p_acl.test({ hostname: cf_zones[z].name }) ||
+                    p_acl.test({ hostname: `.${cf_zones[z].name}` })
+                  )
                     found = true;
                   hostnames.push(cf_zones[z].name);
                   z++;
                 }
                 if (!found)
-                  return dns01cf_error(`When 'sub' is not set, all ACLs must have a defined CloudFlare zone. ACL '${acl}' does not have a matching zone. Zone hostnames returned from CloudFlare: ${hostnames.join(', ')}`, { status: 422 });
+                  return dns01cf_error(
+                    "When 'sub' is not set, all ACLs must have a defined CloudFlare zone. " +
+                      `ACL '${acl}' does not have a matching zone. ` +
+                      `Zone hostnames returned from CloudFlare: ${hostnames.join(", ")}`,
+                    { status: 422 },
+                  );
               }
             }
             payload.acl = json.acl;
@@ -647,72 +711,75 @@ class Listener {
             if (json.dat) {
               const len = String(json.dat).length;
               if (len > DNS01CF.config.DAT_MAX_LENGTH)
-                return dns01cf_error(`'dat' cannot exceed ${DNS01CF.config.DAT_MAX_LENGTH} bytes in size. Current size: ${len}`, { status: 422 });
+                return dns01cf_error(
+                  `'dat' cannot exceed ${DNS01CF.config.DAT_MAX_LENGTH} bytes in size. Current size: ${len}`,
+                  { status: 422 },
+                );
               payload.dat = json.dat;
             }
             // End Tests
             // Generate and return a new token
             const newtok = await authtok.generateToken(payload);
             const newtok_decoded = authtok.decodeToken(newtok);
-            return dns01cf_response({
-              result: "ok",
-              message: "Token generated",
-              token: newtok,
-              payload: newtok_decoded.payload
-            }, { status: 200 }, { json: true, pretty: true });
-            break
+            return dns01cf_response(
+              {
+                result: "ok",
+                message: "Token generated",
+                token: newtok,
+                payload: newtok_decoded.payload,
+              },
+              { status: 200 },
+              { json: true, pretty: true },
+            );
+            break;
           // Set or delete a DNS record
           case "set_record":
           case "delete_record":
-            const set_action = (pathres.pathname.groups.action === "set_record");
+            const set_action = pathres.pathname.groups.action === "set_record";
             const testFQDN = authtok.testHostname(json.fqdn);
             if (!json.fqdn || !testFQDN)
               return dns01cf_error("Missing or invalid JSON parameter: fqdn", { status: 400 });
-            if (!json.value)
-              return dns01cf_error("Missing or invalid JSON parameter: value", { status: 400 });
+            if (!json.value) return dns01cf_error("Missing or invalid JSON parameter: value", { status: 400 });
             if (bearertoken.length !== 2)
               return dns01cf_error("Missing or invalid 'Authorization: Bearer' token", { status: 403 });
             try {
               const acl_valid = await authtok.validateTokenACLFQDN(bearertoken[1], json.fqdn);
-              if (!acl_valid)
-                return dns01cf_error(`Not authorized for FQDN: ${json.fqdn}`, { status: 403 });
+              if (!acl_valid) return dns01cf_error(`Not authorized for FQDN: ${json.fqdn}`, { status: 403 });
             } catch (e) {
               return dns01cf_error(`Invalid token: ${e.message}`, { status: 403 });
             }
             const tok_parts = authtok.decodeToken(bearertoken[1]);
             // Get CloudFlare Zone ID
-            zone_id = tok_parts.aud || DNS01CF.config.CF_ZONE_ID;
-            if (!zone_id) {
-              try {
-                const zones = await CFAPI.listZones();
-                let z = 0;
-                while (zones[z] && !zone_id) {
-                  if (String(json.fqdn).endsWith(zones[z].name))
-                    zone_id = zones[z].id;
-                  z++;
-                }
-              } catch (e) {
-                return dns01cf_error(`Unable to list zones: ${e.message}`, { status: 500 });
-              }
+            try {
+              zone_id = tok_parts.aud || DNS01CF.config.CF_ZONE_ID || (await CFAPI.getZoneByName(json.fqdn));
+            } catch (e) {
+              return dns01cf_error(`Unable to list zones: ${e.message}`, { status: 500 });
             }
             if (!zone_id)
-              return dns01cf_error(`Token 'aud' and config 'CF_ZONE_ID' not set, and unable to find CloudFlare Zone ID for ${json.fqdn} from API lookup`, { status: 500 });
+              return dns01cf_error(
+                "Token 'aud' and config 'CF_ZONE_ID' not set, and unable to find " +
+                  `CloudFlare Zone ID for ${json.fqdn} from API lookup`,
+                { status: 500 },
+              );
             let actres;
             try {
-              if (set_action) {
-                actres = await CFAPI.setRecord(zone_id, json.fqdn, json.value);
-              } else {
-                actres = await CFAPI.deleteRecordByValue(zone_id, json.fqdn, json.value);
-              }
-              
+              actres = set_action
+                ? await CFAPI.setRecord(zone_id, json.fqdn, json.value)
+                : await CFAPI.deleteRecordByValue(zone_id, json.fqdn, json.value);
             } catch (e) {
               return dns01cf_error(`Error during DNS update: ${e.message}`, { status: 500 });
             }
-            return dns01cf_response({
-              result: "ok",
-              message: set_action ? `'${json.fqdn}' set to value '${json.value}'` : `'${json.fqdn}' with value '${json.value}' deleted`,
-              response: actres
-            }, { status: 200 }, { json: true });
+            return dns01cf_response(
+              {
+                result: "ok",
+                message: set_action
+                  ? `'${json.fqdn}' set to value '${json.value}'`
+                  : `'${json.fqdn}' with value '${json.value}' deleted`,
+                response: actres,
+              },
+              { status: 200 },
+              { json: true },
+            );
             break;
           default:
             return null;
@@ -727,13 +794,12 @@ class Listener {
      * @param {Object} env The environment bindings assigned to the Worker
      * @returns {Promise<Response>} Parsed FQDN hostname and TXT record value to set
      */
-    acmedns: async function(req, env) {
+    acmedns: async function (req, env) {
       const { pathname } = new URL(req.url);
       const pathtest = new URLPattern({ pathname: "/update" });
       if (pathtest.test({ pathname: pathname }) && req.method === "POST") {
         const authheader = req.headers.get("x-api-key");
-        if (!authheader)
-          return dns01cf_error("Missing 'X-API-Key' header", { status: 401 });
+        if (!authheader) return dns01cf_error("Missing 'X-API-Key' header", { status: 401 });
         const authtok = new AuthToken(DNS01CF.config.TOKEN_SECRET, env);
         let json;
         try {
@@ -741,45 +807,50 @@ class Listener {
         } catch (e) {
           return dns01cf_error(`Invalid JSON: ${e.message}`, { status: 400 });
         }
-        if (!json.subdomain || !authtok.testHostname(json.subdomain))
-         return dns01cf_error("Missing or invalid JSON parameter: subdomain", { status: 400 });
-        if (!json.txt)
-          return dns01cf_error("Missing or invalid JSON parameter: txt", { status: 400 });
+
+        const testSubdomain = authtok.testHostname(json.subdomain);
+        if (!json.subdomain || !testSubdomain)
+          return dns01cf_error("Missing or invalid JSON parameter: subdomain", { status: 400 });
+        if (!json.txt) return dns01cf_error("Missing or invalid JSON parameter: txt", { status: 400 });
         try {
           const acl_valid = await authtok.validateTokenACLFQDN(authheader, json.subdomain);
-          if (!acl_valid)
-            return dns01cf_error(`Not authorized for FQDN: ${json.subdomain}`, { status: 403 });
-          const tok_parts = authtok.decodeToken(authheader);
-          // Get CloudFlare Zone ID
-          let zone_id = tok_parts.aud || DNS01CF.config.CF_ZONE_ID;
-          if (!zone_id) {
-            try {
-              const zones = await CFAPI.listZones();
-              let z = 0;
-              while (zones[z] && !zone_id) {
-                if (String(json.subdomain).endsWith(zones[z].name))
-                  zone_id = zones[z].id;
-                z++;
-              }
-            } catch (e) {
-              return dns01cf_error(`Unable to list zones: ${e.message}`, { status: 500 });
-            }
-          }
-          if (!zone_id)
-            return dns01cf_error(`Token 'aud' and config 'CF_ZONE_ID' not set, and unable to find CloudFlare Zone ID for ${json.subdomain} from API lookup`, { status: 500 });
-          CFAPI.setRecord(zone_id, json.subdomain, json.txt);
-          return dns01cf_response({
-            result: "ok",
-            message: `'${json.subdomain}' set to value '${json.txt}'`
-          }, { status: 200 }, { json: true });
+          if (!acl_valid) return dns01cf_error(`Not authorized for Subdomain: ${json.subdomain}`, { status: 403 });
         } catch (e) {
           return dns01cf_error(`Invalid token: ${e.message}`, { status: 403 });
         }
+        const tok_parts = authtok.decodeToken(authheader);
+        // Get CloudFlare Zone ID
+        let zone_id;
+        try {
+          zone_id = tok_parts.aud || DNS01CF.config.CF_ZONE_ID || (await CFAPI.getZoneByName(json.subdomain));
+        } catch (e) {
+          return dns01cf_error(`Unable to list zones: ${e.message}`, { status: 500 });
+        }
+        if (!zone_id)
+          return dns01cf_error(
+            "Token 'aud' and config 'CF_ZONE_ID' not set, and unable to find " +
+              `CloudFlare Zone ID for ${json.subdomain} from API lookup`,
+            { status: 500 },
+          );
+        let actres;
+        try {
+          actres = await CFAPI.setRecord(zone_id, json.subdomain, json.txt);
+        } catch (e) {
+          return dns01cf_error(`Error during DNS update: ${e.message}`, { status: 500 });
+        }
+        return dns01cf_response(
+          {
+            result: "ok",
+            message: `'${json.subdomain}' set to value '${json.txt}'`,
+            response: actres,
+          },
+          { status: 200 },
+          { json: true },
+        );
       }
       return null;
-    }
-  }
-
+    },
+  };
 }
 
 /**
@@ -793,9 +864,9 @@ class AuthToken {
    * Supported algorithms
    */
   static algos = {
-    HS256: { name: 'HMAC', hash: { name: 'SHA-256' } },
-    HS384: { name: 'HMAC', hash: { name: 'SHA-384' } },
-    HS512: { name: 'HMAC', hash: { name: 'SHA-512' } },
+    HS256: { name: "HMAC", hash: { name: "SHA-256" } },
+    HS384: { name: "HMAC", hash: { name: "SHA-384" } },
+    HS512: { name: "HMAC", hash: { name: "SHA-512" } },
   };
 
   /**
@@ -817,68 +888,55 @@ class AuthToken {
    * @returns {Promise<Boolean>} Returns True if signature passes, otherwise returns False
    */
   async validateToken(token) {
-    if (typeof token !== 'string')
-      throw new Error('JWT must be a String');
-    const tokenParts = token.split('.');
-    if (tokenParts.length !== 3)
-      throw new Error('Invalid JWT structure');
+    if (typeof token !== "string") throw new Error("JWT must be a String");
+    const tokenParts = token.split(".");
+    if (tokenParts.length !== 3) throw new Error("Invalid JWT structure");
     const { headers, payload } = this.decodeToken(token);
-    if (!headers || !payload)
-      throw new Error('Error parsing JWT');
-    if (!headers.typ || !headers.alg || headers.typ.toUpperCase() !== "JWT")
-      throw new Error('Invalid headers');
-    if (!Object.keys(AuthToken.algos).includes(headers.alg.toUpperCase()))
-      throw new Error('Invalid algorithm');
-    if (payload.nbf && payload.nbf > Math.floor(Date.now() / 1000))
-      throw new Error('Token not yet valid');
-    if (payload.exp && payload.exp <= Math.floor(Date.now() / 1000))
-      throw new Error('Token expired');
-    if (!payload.acl)
-      throw new Error('Missing ACL');
+    if (!headers || !payload) throw new Error("Error parsing JWT");
+    if (!headers.typ || !headers.alg || headers.typ.toUpperCase() !== "JWT") throw new Error("Invalid headers");
+    if (!Object.keys(AuthToken.algos).includes(headers.alg.toUpperCase())) throw new Error("Invalid algorithm");
+    if (payload.nbf && payload.nbf > Math.floor(Date.now() / 1000)) throw new Error("Token not yet valid");
+    if (payload.exp && payload.exp <= Math.floor(Date.now() / 1000)) throw new Error("Token expired");
+    if (!payload.acl) throw new Error("Missing ACL");
     const acl_test = this.testACL(payload.acl);
-    if (acl_test)
-      throw new Error(acl_test);
+    if (acl_test) throw new Error(acl_test);
     const key = await this.importKey();
     return await crypto.subtle.verify(
       this.algo,
       key,
       this.base64UrlToArrayBuffer(tokenParts[2]),
-      this.textToArrayBuffer(`${tokenParts[0]}.${tokenParts[1]}`)
+      this.textToArrayBuffer(`${tokenParts[0]}.${tokenParts[1]}`),
     );
   }
 
   /**
    * Generate a dns01cf JWT
-   * @param {Object} payload 
+   * @param {Object} payload
    * @returns {Promise<String>} JSON Web Token
    */
   async generateToken(payload) {
     payload.iss = `dns01cf_v${DNS01CF.version}`;
     payload.iat = payload.nbf = Math.floor(Date.now() / 1000);
     const key = await this.importKey();
-    const header = {typ: 'JWT', alg: this.algoname};
+    const header = { typ: "JWT", alg: this.algoname };
     const headerB64 = this.textToBase64Url(JSON.stringify(header));
     const payloadB64 = this.textToBase64Url(JSON.stringify(payload));
-    const signature = await crypto.subtle.sign(
-      this.algo,
-      key,
-      this.textToArrayBuffer(`${headerB64}.${payloadB64}`)
-    );
+    const signature = await crypto.subtle.sign(this.algo, key, this.textToArrayBuffer(`${headerB64}.${payloadB64}`));
     const signatureB64 = this.arrayBufferToBase64Url(signature);
     return `${headerB64}.${payloadB64}.${signatureB64}`;
   }
 
   /**
    * Decodes a JWT WITHOUT verifying its validity first
-   * @param {String} token 
+   * @param {String} token
    * @returns {Object} JWT payload
    */
   decodeToken(token) {
-    const parts = token.split('.');
+    const parts = token.split(".");
     try {
       return {
         headers: JSON.parse(this.base64UrlToText(parts[0])),
-        payload: JSON.parse(this.base64UrlToText(parts[1]))
+        payload: JSON.parse(this.base64UrlToText(parts[1])),
       };
     } catch {
       return false;
@@ -890,13 +948,7 @@ class AuthToken {
    * @returns {Promise<CryptoKey>}
    */
   async importKey() {
-    return crypto.subtle.importKey(
-      "raw",
-      this.textToArrayBuffer(this.secret),
-      this.algo,
-      true,
-      ["verify", "sign"]
-    );
+    return crypto.subtle.importKey("raw", this.textToArrayBuffer(this.secret), this.algo, true, ["verify", "sign"]);
   }
 
   /**
@@ -908,28 +960,22 @@ class AuthToken {
    */
   async validateTokenACLFQDN(token, fqdn) {
     const valid = await this.validateToken(token);
-    if (!valid)
-      throw new Error("Invalid token signature");
+    if (!valid) throw new Error("Invalid token signature");
     const tok = this.decodeToken(token);
-    if (tok.payload.sub && !this.testHostname(tok.payload.sub))
-      throw new Error("Invalid token subject");
+    if (tok.payload.sub && !this.testHostname(tok.payload.sub)) throw new Error("Invalid token subject");
     for (let acl of tok.payload.acl) {
       const host = tok.payload.sub ? `${acl}.${tok.payload.sub}` : acl;
-      if (host.startsWith('!')) {
-        if (this.testHostnamePattern(host.substring(1), fqdn))
-          return false;
+      if (host.startsWith("!")) {
+        if (this.testHostnamePattern(host.substring(1), fqdn)) return false;
       } else {
-        if (this.testHostnamePattern(host, fqdn))
-          return true;
+        if (this.testHostnamePattern(host, fqdn)) return true;
       }
       // If ACL_STRICT_ACME_HOSTNAME is not enabled, also implicitly grant and test an `_acme-challenge.` prefix on the ACL
       if (!DNS01CF.config.ACL_STRICT_ACME_HOSTNAME) {
-        if (host.startsWith('!')) {
-          if (this.testHostnamePattern(`_acme-challenge.${host.substring(1)}`, fqdn))
-            return false;
+        if (host.startsWith("!")) {
+          if (this.testHostnamePattern(`_acme-challenge.${host.substring(1)}`, fqdn)) return false;
         } else {
-          if (this.testHostnamePattern(`_acme-challenge.${host}`, fqdn))
-            return true;
+          if (this.testHostnamePattern(`_acme-challenge.${host}`, fqdn)) return true;
         }
       }
     }
@@ -942,13 +988,11 @@ class AuthToken {
    * @returns {String} String with an error if invalid, otherwise null if valid
    */
   testACL(acl) {
-    if (typeof acl !== 'object' || Object.prototype.toString.call(acl) !== '[object Array]')
+    if (typeof acl !== "object" || Object.prototype.toString.call(acl) !== "[object Array]")
       return "ACL must be a list of FQDNs";
-    if (acl.length === 0)
-      return "ACL cannot be an empty list";
+    if (acl.length === 0) return "ACL cannot be an empty list";
     for (let fqdn of acl) {
-      if (!this.testACLHostname(fqdn))
-        return `Invalid ACL FQDN syntax: ${fqdn}`;
+      if (!this.testACLHostname(fqdn)) return `Invalid ACL FQDN syntax: ${fqdn}`;
     }
     return null;
   }
@@ -960,7 +1004,9 @@ class AuthToken {
    * @returns {Boolean} Result of the test
    */
   testACLHostname(hostname) {
-    return new RegExp("^(?=^.{4,253}\.?$)(^_?((?!-)!?[a-zA-Z0-9-\*]{1,63}(?<!-)\.)+[a-zA-Z\*]{2,63}$)$", "g").test(hostname);
+    return new RegExp("^(?=^.{4,253}.?$)(^_?((?!-)!?[a-zA-Z0-9-*]{1,63}(?<!-).)+[a-zA-Z*]{2,63}$)$", "g").test(
+      hostname,
+    );
   }
 
   /**
@@ -970,7 +1016,7 @@ class AuthToken {
    * @returns {Boolean} Result of the test
    */
   testHostname(hostname) {
-    return new RegExp("^(?=^.{4,253}\.?$)(^_?((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)$", "g").test(hostname);
+    return new RegExp("^(?=^.{4,253}.?$)(^_?((?!-)[a-zA-Z0-9-]{1,63}(?<!-).)+[a-zA-Z]{2,63}$)$", "g").test(hostname);
   }
 
   /**
@@ -985,31 +1031,19 @@ class AuthToken {
   }
 
   /**
-   * Function to perform a wildcard match against a string
-   * @see {@link https://stackoverflow.com/a/32402438}
-   * @param {String} str String to test
-   * @param {String} rule Expression with asterisk wildcards
-   * @returns {Boolean} Result of the test
-   */
-  wildcardMatch(str, rule) {
-    var escapeRegex = (str) => str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-    return new RegExp("^" + rule.split("*").map(escapeRegex).join(".*") + "$").test(str);
-  }
-
-  /**
-   * @param {Uint8Array} bytes 
+   * @param {Uint8Array} bytes
    * @returns {String}
    */
   bytesToByteString(bytes) {
-    let byteStr = '';
+    let byteStr = "";
     for (let i = 0; i < bytes.byteLength; i++) {
-        byteStr += String.fromCharCode(bytes[i]);
+      byteStr += String.fromCharCode(bytes[i]);
     }
     return byteStr;
   }
 
   /**
-   * @param {String} byteStr 
+   * @param {String} byteStr
    * @returns {Uint8Array}
    */
   byteStringToBytes(byteStr) {
@@ -1021,23 +1055,23 @@ class AuthToken {
   }
 
   /**
-   * @param {String} str 
+   * @param {String} str
    * @returns {String}
    */
   base64UrlToText(str) {
-    return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+    return atob(str.replace(/-/g, "+").replace(/_/g, "/"));
   }
 
   /**
-   * @param {String} str 
+   * @param {String} str
    * @returns {String}
    */
   textToBase64Url(str) {
-    return btoa(str).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    return btoa(str).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
   }
 
   /**
-   * @param {ArrayBuffer} arrayBuffer 
+   * @param {ArrayBuffer} arrayBuffer
    * @returns {String}
    */
   arrayBufferToBase64String(arrayBuffer) {
@@ -1045,15 +1079,15 @@ class AuthToken {
   }
 
   /**
-   * @param {ArrayBuffer} arrayBuffer 
+   * @param {ArrayBuffer} arrayBuffer
    * @returns {String}
    */
   arrayBufferToBase64Url(arrayBuffer) {
-    return this.arrayBufferToBase64String(arrayBuffer).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    return this.arrayBufferToBase64String(arrayBuffer).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
   }
 
   /**
-   * @param {String} b64str 
+   * @param {String} b64str
    * @returns {ArrayBuffer}
    */
   base64StringToArrayBuffer(b64str) {
@@ -1061,15 +1095,15 @@ class AuthToken {
   }
 
   /**
-   * @param {String} b64url 
+   * @param {String} b64url
    * @returns {ArrayBuffer}
    */
   base64UrlToArrayBuffer(b64url) {
-    return this.base64StringToArrayBuffer(b64url.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, ''));
+    return this.base64StringToArrayBuffer(b64url.replace(/-/g, "+").replace(/_/g, "/").replace(/\s/g, ""));
   }
 
   /**
-   * @param {String} str 
+   * @param {String} str
    * @returns {ArrayBuffer}
    */
   textToArrayBuffer(str) {
