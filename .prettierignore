@@ -1,0 +1,5 @@
+**/*.html
+**/.git
+**/node_modules
+**/mkdocs
+**/*.md
