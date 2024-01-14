@@ -9,7 +9,7 @@
 
 *dns01cf* supports most newer and legacy ACME clients by simulating various DNS provider APIs, enabling the reuse of existing client infrastructure while only requiring a change in the DNS challenge endpoint.
 
-Deployment of dns01cf is swift, taking just a few minutes directly through the Cloudflare web UI. No installation of Git, Wrangler, or any additional tools is necessary.
+Deployment of *dns01cf* is swift, taking just a few minutes directly through the Cloudflare web UI. No installation of Git, Wrangler, or any additional tools is necessary.
 
 ### FEATURES
 
