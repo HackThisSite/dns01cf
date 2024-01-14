@@ -5,9 +5,11 @@
 
 ## DESCRIPTION
 
-*dns01cf* is a single-file, Wrangler-free Cloudflare Worker that enables ACME DNS-01 validation while protecting your DNS with granular ACLs. Only one domain needs to be behind Cloudflare, the rest can be anywhere.
+*dns01cf* is a Cloudflare Worker DNS proxy, limiting client access for ACME DNS-01 challenges down to individual TXT records. It also supports consolidation of DNS-01 challenges for non-Cloudflare domains through [domain aliasing CNAMEs](#one-domain-behind-cloudflare-domain-aliasing).
 
-Installation takes just a few minutes and can be done directly in the Cloudflare web UI -- no installation of Git, Wrangler, or anything required!
+*dns01cf* supports most newer and legacy ACME clients by simulating various DNS provider APIs, enabling the reuse of existing client infrastructure while only requiring a change in the DNS challenge endpoint.
+
+Deployment of dns01cf is swift, taking just a few minutes directly through the Cloudflare web UI. No installation of Git, Wrangler, or any additional tools is necessary.
 
 ### FEATURES
 
