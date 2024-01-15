@@ -64,21 +64,22 @@ const DNS01CF = {
  * @param {Object} ctx Context accessor to augment or control how the request is handled
  * @returns {Promise<Response>} HTTP Response object
  */
-async function process_request(req, env, ctx) {
+async function processRequest(req, env, ctx) {
   const { pathname } = new URL(req.url);
   // 204 empty responses
   const null_paths = [undefined, null, "/", "/favicon.ico"];
   if (null_paths.includes(pathname)) {
-    return dns01cf_response(null, { status: 204 });
+    return dns01cfResponse(null, { status: 204 });
   } else if (pathname === "/robots.txt") {
-    return dns01cf_response(`User-agent: *\nDisallow: /`);
+    const newline = String.fromCharCode(10);
+    return dns01cfResponse(`User-agent: *${newline}Disallow: /`);
   }
 
   // Preflight check for proper configs
   try {
     preFlightCheck(env);
   } catch (e) {
-    return dns01cf_error(`Configuration error: ${e.message}. Config docs can be found at: ${DNS01CF.urls.website}`, {
+    return dns01cfError(`Configuration error: ${e.message}. Config docs can be found at: ${DNS01CF.urls.website}`, {
       status: 500,
     });
   }
@@ -90,11 +91,11 @@ async function process_request(req, env, ctx) {
     if (res && res instanceof Response) return res;
   } catch (e) {
     const [, lineno, colno] = e.stack.match(/(\d+):(\d+)/);
-    return dns01cf_error(`Runtime error (line ${lineno} col ${colno}): ${e.message}`, { status: 500 });
+    return dns01cfError(`Runtime error (line ${lineno} col ${colno}): ${e.message}`, { status: 500 });
   }
 
   // 404 catch-all
-  return dns01cf_response(null, { status: 404 });
+  return dns01cfResponse(null, { status: 404 });
 }
 
 /**
@@ -103,7 +104,7 @@ async function process_request(req, env, ctx) {
  * @param {Object} env An object containing the bindings associated with this worker
  * @param {Object} ctx An object containing the context associated with this worker
  */
-async function process_cron(event, env, ctx) {
+async function processCron(event, env, ctx) {
   // Preflight check for proper configs
   try {
     preFlightCheck(env);
@@ -272,8 +273,11 @@ function preFlightCheck(env) {
  * @param {Boolean} [json_settings.pretty=false] If set to True, print human-readable prettified JSON
  * @returns {Response} HTTP Response object
  */
-function dns01cf_response(body = null, init = {}, json_settings = { json: false, pretty: false }) {
+function dns01cfResponse(body = null, init = {}, json_settings = { json: false, pretty: false }) {
   if (!init.headers) init.headers = {};
+  init.headers["Expires"] = new Date(1).toUTCString();
+  init.headers["Last-Modified"] = new Date().toUTCString();
+  init.headers["Cache-Control"] = "max-age=0, no-cache, must-revalidate, proxy-revalidate";
   if (!DNS01CF.config.DISABLE_POWERED_BY)
     init.headers["X-Powered-By"] = `dns01cf v${DNS01CF.version} - ${DNS01CF.urls.website}`;
   if (json_settings.json) {
@@ -289,9 +293,9 @@ function dns01cf_response(body = null, init = {}, json_settings = { json: false,
  * @param {ResponseInit} [init] An object that contains custom settings to apply to the response
  * @returns {Response} HTTP Response object
  */
-function dns01cf_error(message, init = {}) {
+function dns01cfError(message, init = {}) {
   if (!init.status) init.status = 500;
-  return dns01cf_response({ result: "error", message: message }, init, { json: true, pretty: true });
+  return dns01cfResponse({ result: "error", message: message }, init, { json: true, pretty: true });
 }
 
 /**
@@ -439,6 +443,7 @@ class CFAPI {
     };
   }
 
+  // May be used, todo
   static validatedns01cfRecord(record) {
     if (typeof record[0] === "undefined" || !record[0].name) {
       throw new Error(`Record is invalid`);
@@ -595,7 +600,7 @@ class Listener {
         if (DNS01CF.config.DNS01CF_PATH_PREFIX || pathres.pathname.groups.prefix)
           if (pathres.pathname.groups.prefix !== DNS01CF.config.DNS01CF_PATH_PREFIX) return null;
         const authheader = req.headers.get("authorization");
-        if (!authheader) return dns01cf_error("Missing 'Authorization' header", { status: 401 });
+        if (!authheader) return dns01cfError("Missing 'Authorization' header", { status: 401 });
         const bearertoken = authheader.split(" ");
         const authtok = new AuthToken(DNS01CF.config.TOKEN_SECRET, env);
         let json;
@@ -603,7 +608,7 @@ class Listener {
         try {
           json = await req.json();
         } catch (e) {
-          return dns01cf_error(`Invalid JSON: ${e.message}`, { status: 400 });
+          return dns01cfError(`Invalid JSON: ${e.message}`, { status: 400 });
         }
         switch (pathres.pathname.groups.action) {
           // Create a new dns01cf JWT
@@ -612,25 +617,25 @@ class Listener {
             // Tests:
             // - Endpoint enabled
             if (!DNS01CF.config.ENABLE_CREATE_TOKEN)
-              return dns01cf_error(
+              return dns01cfError(
                 "This endpoint is disabled. Set 'ENABLE_CREATE_TOKEN' to 'true' to enable this endpoint. " +
                   `Config docs can be found at: ${DNS01CF.urls.website}`,
                 { status: 403 },
               );
             // - Auth token
             if (authheader !== DNS01CF.config.TOKEN_SECRET)
-              return dns01cf_error("Invalid token secret", { status: 403 });
+              return dns01cfError("Invalid token secret", { status: 403 });
             // - JWT expiration
             if (typeof json.exp !== "undefined") {
               if (typeof json.exp !== "number" || json.exp <= Math.floor(Date.now() / 1000))
-                return dns01cf_error("'exp' must be an integer Unix timestamp set to a future time", { status: 400 });
+                return dns01cfError("'exp' must be an integer Unix timestamp set to a future time", { status: 400 });
               payload.exp = json.exp;
             }
             // - JWT audience
             let cf_zone;
             if (json.aud) {
               if (json.aud.length > 32 || json.aud.match(/[^0-9a-z]/i))
-                return dns01cf_error("'aud' is too long or has invalid characters", { status: 400 });
+                return dns01cfError("'aud' is too long or has invalid characters", { status: 400 });
               zone_id = json.aud;
               payload.aud = json.aud;
             } else if (DNS01CF.config.CF_ZONE_ID) {
@@ -640,7 +645,7 @@ class Listener {
               try {
                 cf_zone = await CFAPI.getZoneByID(zone_id);
               } catch (e) {
-                return dns01cf_error(`Error validating Zone ID '${zone_id}': ${e.message}`, { status: 422 });
+                return dns01cfError(`Error validating Zone ID '${zone_id}': ${e.message}`, { status: 422 });
               }
             }
             // - Extract out zone info for Subject and ACL tests
@@ -651,13 +656,13 @@ class Listener {
               try {
                 cf_zones = await CFAPI.listZones();
               } catch (e) {
-                return dns01cf_error(`Unable to list zones: ${e.message}`, { status: 422 });
+                return dns01cfError(`Unable to list zones: ${e.message}`, { status: 422 });
               }
             }
             // - JWT subject
             if (json.sub) {
               if (!authtok.testHostname(json.sub))
-                return dns01cf_error("'sub' is not a valid hostname", { status: 422 });
+                return dns01cfError("'sub' is not a valid hostname", { status: 422 });
               let z = 0,
                 found = false,
                 hostnames = [];
@@ -668,7 +673,7 @@ class Listener {
                 z++;
               }
               if (!found)
-                return dns01cf_error(
+                return dns01cfError(
                   `'sub' error: Hostname '${json.sub}' does not have a matching zone. ` +
                     `Zone hostnames returned from CloudFlare: ${hostnames.join(", ")}`,
                   { status: 422 },
@@ -676,9 +681,9 @@ class Listener {
               payload.sub = json.sub;
             }
             // - ACL
-            if (!json.acl) return dns01cf_error("'acl' is required", { status: 400 });
+            if (!json.acl) return dns01cfError("'acl' is required", { status: 400 });
             const acl_test = authtok.testACL(json.acl);
-            if (acl_test) return dns01cf_error(`'acl' syntax error: ${acl_test}`, { status: 400 });
+            if (acl_test) return dns01cfError(`'acl' syntax error: ${acl_test}`, { status: 400 });
             if (!payload.sub) {
               for (let acl of json.acl) {
                 if (String(acl).startsWith("!")) acl = String(acl).substring(1);
@@ -698,7 +703,7 @@ class Listener {
                   z++;
                 }
                 if (!found)
-                  return dns01cf_error(
+                  return dns01cfError(
                     "When 'sub' is not set, all ACLs must have a defined CloudFlare zone. " +
                       `ACL '${acl}' does not have a matching zone. ` +
                       `Zone hostnames returned from CloudFlare: ${hostnames.join(", ")}`,
@@ -711,7 +716,7 @@ class Listener {
             if (json.dat) {
               const len = String(json.dat).length;
               if (len > DNS01CF.config.DAT_MAX_LENGTH)
-                return dns01cf_error(
+                return dns01cfError(
                   `'dat' cannot exceed ${DNS01CF.config.DAT_MAX_LENGTH} bytes in size. Current size: ${len}`,
                   { status: 422 },
                 );
@@ -721,7 +726,7 @@ class Listener {
             // Generate and return a new token
             const newtok = await authtok.generateToken(payload);
             const newtok_decoded = authtok.decodeToken(newtok);
-            return dns01cf_response(
+            return dns01cfResponse(
               {
                 result: "ok",
                 message: "Token generated",
@@ -738,25 +743,25 @@ class Listener {
             const set_action = pathres.pathname.groups.action === "set_record";
             const testFQDN = authtok.testHostname(json.fqdn);
             if (!json.fqdn || !testFQDN)
-              return dns01cf_error("Missing or invalid JSON parameter: fqdn", { status: 400 });
-            if (!json.value) return dns01cf_error("Missing or invalid JSON parameter: value", { status: 400 });
+              return dns01cfError("Missing or invalid JSON parameter: fqdn", { status: 400 });
+            if (!json.value) return dns01cfError("Missing or invalid JSON parameter: value", { status: 400 });
             if (bearertoken.length !== 2)
-              return dns01cf_error("Missing or invalid 'Authorization: Bearer' token", { status: 403 });
+              return dns01cfError("Missing or invalid 'Authorization: Bearer' token", { status: 403 });
             try {
-              const acl_valid = await authtok.validateTokenACLFQDN(bearertoken[1], json.fqdn);
-              if (!acl_valid) return dns01cf_error(`Not authorized for FQDN: ${json.fqdn}`, { status: 403 });
+              const acl_valid = await authtok.validateTokenAccess(bearertoken[1], json.fqdn);
+              if (!acl_valid) return dns01cfError(`Not authorized for FQDN: ${json.fqdn}`, { status: 403 });
             } catch (e) {
-              return dns01cf_error(`Invalid token: ${e.message}`, { status: 403 });
+              return dns01cfError(`Invalid token: ${e.message}`, { status: 403 });
             }
             const tok_parts = authtok.decodeToken(bearertoken[1]);
             // Get CloudFlare Zone ID
             try {
               zone_id = tok_parts.aud || DNS01CF.config.CF_ZONE_ID || (await CFAPI.getZoneByName(json.fqdn));
             } catch (e) {
-              return dns01cf_error(`Unable to list zones: ${e.message}`, { status: 500 });
+              return dns01cfError(`Unable to list zones: ${e.message}`, { status: 500 });
             }
             if (!zone_id)
-              return dns01cf_error(
+              return dns01cfError(
                 "Token 'aud' and config 'CF_ZONE_ID' not set, and unable to find " +
                   `CloudFlare Zone ID for ${json.fqdn} from API lookup`,
                 { status: 500 },
@@ -767,9 +772,9 @@ class Listener {
                 ? await CFAPI.setRecord(zone_id, json.fqdn, json.value)
                 : await CFAPI.deleteRecordByValue(zone_id, json.fqdn, json.value);
             } catch (e) {
-              return dns01cf_error(`Error during DNS update: ${e.message}`, { status: 500 });
+              return dns01cfError(`Error during DNS update: ${e.message}`, { status: 500 });
             }
-            return dns01cf_response(
+            return dns01cfResponse(
               {
                 result: "ok",
                 message: set_action
@@ -799,24 +804,24 @@ class Listener {
       const pathtest = new URLPattern({ pathname: "/update" });
       if (pathtest.test({ pathname: pathname }) && req.method === "POST") {
         const authheader = req.headers.get("x-api-key");
-        if (!authheader) return dns01cf_error("Missing 'X-API-Key' header", { status: 401 });
+        if (!authheader) return dns01cfError("Missing 'X-API-Key' header", { status: 401 });
         const authtok = new AuthToken(DNS01CF.config.TOKEN_SECRET, env);
         let json;
         try {
           json = await req.json();
         } catch (e) {
-          return dns01cf_error(`Invalid JSON: ${e.message}`, { status: 400 });
+          return dns01cfError(`Invalid JSON: ${e.message}`, { status: 400 });
         }
 
         const testSubdomain = authtok.testHostname(json.subdomain);
         if (!json.subdomain || !testSubdomain)
-          return dns01cf_error("Missing or invalid JSON parameter: subdomain", { status: 400 });
-        if (!json.txt) return dns01cf_error("Missing or invalid JSON parameter: txt", { status: 400 });
+          return dns01cfError("Missing or invalid JSON parameter: subdomain", { status: 400 });
+        if (!json.txt) return dns01cfError("Missing or invalid JSON parameter: txt", { status: 400 });
         try {
-          const acl_valid = await authtok.validateTokenACLFQDN(authheader, json.subdomain);
-          if (!acl_valid) return dns01cf_error(`Not authorized for Subdomain: ${json.subdomain}`, { status: 403 });
+          const acl_valid = await authtok.validateTokenAccess(authheader, json.subdomain);
+          if (!acl_valid) return dns01cfError(`Not authorized for Subdomain: ${json.subdomain}`, { status: 403 });
         } catch (e) {
-          return dns01cf_error(`Invalid token: ${e.message}`, { status: 403 });
+          return dns01cfError(`Invalid token: ${e.message}`, { status: 403 });
         }
         const tok_parts = authtok.decodeToken(authheader);
         // Get CloudFlare Zone ID
@@ -824,10 +829,10 @@ class Listener {
         try {
           zone_id = tok_parts.aud || DNS01CF.config.CF_ZONE_ID || (await CFAPI.getZoneByName(json.subdomain));
         } catch (e) {
-          return dns01cf_error(`Unable to list zones: ${e.message}`, { status: 500 });
+          return dns01cfError(`Unable to list zones: ${e.message}`, { status: 500 });
         }
         if (!zone_id)
-          return dns01cf_error(
+          return dns01cfError(
             "Token 'aud' and config 'CF_ZONE_ID' not set, and unable to find " +
               `CloudFlare Zone ID for ${json.subdomain} from API lookup`,
             { status: 500 },
@@ -836,9 +841,9 @@ class Listener {
         try {
           actres = await CFAPI.setRecord(zone_id, json.subdomain, json.txt);
         } catch (e) {
-          return dns01cf_error(`Error during DNS update: ${e.message}`, { status: 500 });
+          return dns01cfError(`Error during DNS update: ${e.message}`, { status: 500 });
         }
-        return dns01cf_response(
+        return dns01cfResponse(
           {
             result: "ok",
             message: `'${json.subdomain}' set to value '${json.txt}'`,
@@ -948,7 +953,7 @@ class AuthToken {
    * @returns {Promise<CryptoKey>}
    */
   async importKey() {
-    return crypto.subtle.importKey("raw", this.textToArrayBuffer(this.secret), this.algo, true, ["verify", "sign"]);
+    return await crypto.subtle.importKey("raw", this.textToArrayBuffer(this.secret), this.algo, true, ["verify", "sign"]);
   }
 
   /**
@@ -958,7 +963,7 @@ class AuthToken {
    * @throws {Error}
    * @returns {Promise<Boolean>}
    */
-  async validateTokenACLFQDN(token, fqdn) {
+  async validateTokenAccess(token, fqdn) {
     const valid = await this.validateToken(token);
     if (!valid) throw new Error("Invalid token signature");
     const tok = this.decodeToken(token);
@@ -1123,7 +1128,7 @@ export default {
    * @returns {Promise<Response>} HTTP Response object
    */
   async fetch(req, env, ctx) {
-    return await process_request(req, env, ctx);
+    return await processRequest(req, env, ctx);
   },
 
   /**
@@ -1133,7 +1138,7 @@ export default {
    * @param {Object} ctx An object containing the context associated with this worker
    */
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(process_cron(event, env, ctx));
+    ctx.waitUntil(processCron(event, env, ctx));
   },
 };
 
